@@ -1,7 +1,4 @@
 package modelo;
-
-
-
 import config.ConexionSQL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
