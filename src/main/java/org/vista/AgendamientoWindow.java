@@ -1,19 +1,22 @@
 package org.vista;
 
 
+import com.toedter.calendar.JDateChooser;
+import org.config.ConexionSQL;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import com.toedter.calendar.JDateChooser;
+import java.sql.*;
+import java.util.Date;
 
 /**
  * Ventana principal para la gestión de citas médicas.
  * Permite a los usuarios agendar citas con médicos según especialidad y fecha.
  */
 public class AgendamientoWindow extends JFrame{
-    
+
 
     private JTextField txtCedulaPaciente;
     private JComboBox<String> cmbEspecialidad;
@@ -46,14 +49,18 @@ public class AgendamientoWindow extends JFrame{
 
         // Campo: Especialidad Médica
         panelFormulario.add(new JLabel("Especialidad Médica:"));
-        cmbEspecialidad = new JComboBox<>(new String[]{"Cardiología", "Dermatología", "Pediatría", "General"});
-        cmbEspecialidad.addActionListener(e -> cargarMedicos());
+        // Inicializar el ComboBox vacío (sin datos estáticos)
+        cmbEspecialidad = new JComboBox<>();
         panelFormulario.add(cmbEspecialidad);
 
         // Campo: Médico
         panelFormulario.add(new JLabel("Médico:"));
         cmbMedico = new JComboBox<>();
         panelFormulario.add(cmbMedico);
+
+        cmbEspecialidad.addActionListener(e -> cargarMedicos());
+        // Cargar las especialidades desde la base de datos
+        cargarEspecialidadesDesdeDB();
 
         // Campo: Fecha
         panelFormulario.add(new JLabel("Fecha:"));
@@ -99,29 +106,79 @@ public class AgendamientoWindow extends JFrame{
         add(panelFormulario, BorderLayout.NORTH);
         add(scrollTabla, BorderLayout.CENTER);
 
+        dateChooser.setMinSelectableDate(new Date());
+        ((JTextField) dateChooser.getDateEditor().getUiComponent()).setEditable(false); // Hacer el campo de fecha no editable
 
         setVisible(true);
+    }
+
+    private void cargarEspecialidadesDesdeDB() {
+        String sql = "SELECT nombre FROM ESPECIALIDAD ORDER BY nombre";
+
+        try (Connection conn = ConexionSQL.conectar();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            // Limpiar el ComboBox
+            cmbEspecialidad.removeAllItems();
+            cmbEspecialidad.addItem("Seleccione una especialidad...");
+
+            // Cargar especialidades
+            while (rs.next()) {
+                cmbEspecialidad.addItem(rs.getString("nombre"));
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al cargar especialidades: " + e.getMessage(),
+                    "Error de Base de Datos",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 
     private void cargarMedicos() {
         String especialidad = (String) cmbEspecialidad.getSelectedItem();
         cmbMedico.removeAllItems();
 
-        switch (especialidad) {
-            case "Cardiología":
-                cmbMedico.addItem("Dr. Carlos Pérez");
-                cmbMedico.addItem("Dra. Ana Martínez");
-                break;
-            case "Dermatología":
-                cmbMedico.addItem("Dra. Laura Gómez");
-                break;
-            case "Pediatría":
-                cmbMedico.addItem("Dr. Luis Fernández");
-                cmbMedico.addItem("Dra. María López");
-                break;
-            case "General":
-                cmbMedico.addItem("Dr. José Ramírez");
-                break;
+        // Verificar si hay una especialidad válida seleccionada
+        if (especialidad == null || especialidad.equals("Seleccione una especialidad...")) {
+            cmbMedico.addItem("Seleccione primero una especialidad");
+            return;
+        }
+
+        // Cargar médicos desde la base de datos
+        cargarMedicosDesdeDB(especialidad);
+    }
+
+    private void cargarMedicosDesdeDB(String especialidad) {
+        String sql = "SELECT DISTINCT m.ID_MEDICO, m.NOMBRE, m.TELEFONO " +
+                "FROM MEDICO m " +
+                "INNER JOIN ESPECIALIDAD e ON m.ID_ESPECIALIDAD = e.ID_ESPECIALIDAD " +
+                "WHERE e.nombre = ? " +
+                "ORDER BY m.NOMBRE";
+
+        try (Connection conn = ConexionSQL.conectar();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, especialidad);
+            ResultSet rs = pstmt.executeQuery();
+
+            // Agregar opción por defecto
+            cmbMedico.addItem("Seleccione un médico...");
+
+            // Cargar médicos desde la base de datos
+            while (rs.next()) {
+                String nombreCompleto = rs.getString("nombre");
+                cmbMedico.addItem(nombreCompleto);
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al cargar médicos: " + e.getMessage() +
+                            "\nSe cargarán valores por defecto.",
+                    "Error de Base de Datos",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 
