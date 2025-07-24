@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package org.vista;
 
 import org.config.Config;
@@ -10,11 +6,10 @@ import java.awt.*;
 
 public class SeleccionSede extends JFrame {
 
-    private JPanel rightPanel;
-    private JComboBox<String> comboSede;
+    private final JComboBox<String> comboSede;
 
     public SeleccionSede() {
-        setTitle("Sistema Hospitalario Médico");
+        setTitle("Sistema Hospitalario Médico - Selección de Sede");
         setSize(900, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -27,130 +22,128 @@ public class SeleccionSede extends JFrame {
         // ----------------- PANEL IZQUIERDO (igual al de HomeWindow) -----------------
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(230, 230, 230));
+        leftPanel.setBackground(new Color(0, 53, 84));
         leftPanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
         JLabel titulo = new JLabel("SISTEMA HOSPITALARIO MÉDICO");
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         titulo.setFont(new Font("Arial", Font.BOLD, 20));
-        titulo.setForeground(new Color(50, 50, 50));
+        titulo.setForeground(new Color(255, 255, 255));
         leftPanel.add(titulo);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
-          // Espacio para imagen PNG
-        JLabel imagePlaceholder = new JLabel(escalarImagen("/pngs/hospital_icon.png", 180, 180));
-        imagePlaceholder.setAlignmentX(Component.CENTER_ALIGNMENT); // Centrado horizontal
-        imagePlaceholder.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0)); // Márgenes opcionales
-        leftPanel.add(imagePlaceholder);
-
+        // Espacio para imagen PNG con manejo de errores
+        try {
+            JLabel imagePlaceholder = new JLabel(escalarImagen("/pngs/hospital_icon.png", 180, 180));
+            imagePlaceholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+            imagePlaceholder.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+            leftPanel.add(imagePlaceholder);
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar la imagen: " + e.getMessage());
+            // Placeholder alternativo si la imagen no se encuentra
+            JLabel placeholder = new JLabel("🏥");
+            placeholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+            placeholder.setFont(new Font("Arial", Font.PLAIN, 80));
+            leftPanel.add(placeholder);
+        }
 
         mainPanel.add(leftPanel);
 
-        // ----------------- PANEL DERECHO CAMBIANTE -----------------
-        rightPanel = new JPanel();
+        // ----------------- PANEL DERECHO - SELECCIÓN DE SEDE -----------------
+        JPanel rightPanel = new JPanel();
         rightPanel.setLayout(null);
-        rightPanel.setBackground(new Color(245, 245, 245));
+        rightPanel.setBackground(new Color(157, 209, 241));
         mainPanel.add(rightPanel);
 
-        mostrarSeleccionSede();
-    }
+        // Título de selección de sede
+        JLabel lblTitulo = new JLabel("Seleccionar Sede");
+        lblTitulo.setBounds(100, 50, 250, 40);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 24));
+        lblTitulo.setForeground(new Color(0, 53, 84));
+        rightPanel.add(lblTitulo);
 
-    private void mostrarSeleccionSede() {
-        rightPanel.removeAll();
-        rightPanel.repaint();
-        rightPanel.revalidate();
-
+        // Label para selección de sede
         JLabel lblSede = new JLabel("Seleccione la sede:");
-        lblSede.setBounds(100, 100, 200, 30);
+        lblSede.setBounds(100, 120, 200, 30);
         lblSede.setFont(new Font("Arial", Font.BOLD, 16));
+        lblSede.setForeground(new Color(0, 53, 84));
         rightPanel.add(lblSede);
 
+        // ComboBox para seleccionar sede
         comboSede = new JComboBox<>(new String[]{"Quito", "Guayaquil"});
-        comboSede.setBounds(100, 140, 250, 30);
+        comboSede.setBounds(100, 160, 250, 35);
         comboSede.setFont(new Font("Arial", Font.PLAIN, 14));
+        comboSede.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         rightPanel.add(comboSede);
 
+        // Botón continuar
         JButton btnContinuar = new JButton("Continuar");
-        btnContinuar.setBounds(100, 190, 250, 35);
+        btnContinuar.setBounds(100, 220, 250, 40);
         btnContinuar.setFont(new Font("Arial", Font.BOLD, 14));
+        btnContinuar.setBackground(new Color(0, 53, 84));
+        btnContinuar.setForeground(Color.black);
+        btnContinuar.setFocusPainted(false);
+        btnContinuar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         rightPanel.add(btnContinuar);
+        btnContinuar.setOpaque(true);
+        btnContinuar.setContentAreaFilled(true);
 
+        // Evento del botón continuar
         btnContinuar.addActionListener(e -> {
+            // Guardar la sede seleccionada en la configuración
             Config.sedeSeleccionada = comboSede.getSelectedItem().toString();
-            mostrarLogin();
+
+            // Confirmar la sede seleccionada con el usuario
+            int confSedeSelecc = JOptionPane.showConfirmDialog(
+                    this,
+                    "¿Está seguro de que desea continuar con la sede " + Config.sedeSeleccionada + "?",
+                    "Confirmar Sede",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+
+            // Si el usuario no confirma, no hacemos nada
+            if (confSedeSelecc != JOptionPane.YES_OPTION) {
+                return; // Si el usuario no confirma, no hacemos nada
+            }
+
+            // Si el usuario confirma, procedemos a abrir la ventana de login
+            // Abrir la ventana de login (HomeWindow)
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    new HomeWindow().setVisible(true);
+                    dispose();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this,
+                            "Error al abrir la ventana de login: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            });
         });
+
+        // Información adicional sobre la sede
+        JLabel lblInfo = new JLabel("<html><center>Seleccione la sede donde<br>desea acceder al sistema</center></html>");
+        lblInfo.setBounds(100, 280, 250, 50);
+        lblInfo.setFont(new Font("Arial", Font.PLAIN, 12));
+        lblInfo.setForeground(new Color(0, 53, 84));
+        lblInfo.setHorizontalAlignment(SwingConstants.CENTER);
+        rightPanel.add(lblInfo);
     }
 
-    private void mostrarLogin() {
-        rightPanel.removeAll();
-        rightPanel.repaint();
-        rightPanel.revalidate();
-
-        JLabel lblCedula = new JLabel("Cédula:");
-        lblCedula.setBounds(50, 80, 100, 30);
-        rightPanel.add(lblCedula);
-
-        JTextField txtCedula = new JTextField();
-        txtCedula.setBounds(150, 80, 200, 30);
-        rightPanel.add(txtCedula);
-
-        JLabel lblPassword = new JLabel("Contraseña:");
-        lblPassword.setBounds(50, 130, 100, 30);
-        rightPanel.add(lblPassword);
-
-        JPasswordField txtPassword = new JPasswordField();
-        txtPassword.setBounds(150, 130, 200, 30);
-        rightPanel.add(txtPassword);
-
-        JButton btnLogin = new JButton("Iniciar Sesión");
-        btnLogin.setBounds(150, 190, 200, 35);
-        btnLogin.setBackground(new Color(70, 132, 184));
-        btnLogin.setForeground(Color.BLACK);
-        btnLogin.setFocusPainted(false);
-        btnLogin.setFont(new Font("Arial", Font.BOLD, 14));
-        rightPanel.add(btnLogin);
-
-        JLabel lblCambiarSede = new JLabel("Cambiar sede");
-        lblCambiarSede.setBounds(rightPanel.getWidth() - 120, rightPanel.getHeight() - 40, 100, 20);
-        lblCambiarSede.setForeground(Color.BLUE);
-        lblCambiarSede.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lblCambiarSede.setFont(new Font("Arial", Font.PLAIN, 12));
-        rightPanel.add(lblCambiarSede);
-        
-        rightPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
-        public void componentResized(java.awt.event.ComponentEvent evt) {
-            lblCambiarSede.setBounds(rightPanel.getWidth() - 120, rightPanel.getHeight() - 40, 100, 20);
+    private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
+        try {
+            ImageIcon iconoOriginal = new ImageIcon(getClass().getResource(ruta));
+            if (iconoOriginal.getIconWidth() == -1) {
+                throw new IllegalArgumentException("Imagen no encontrada: " + ruta);
+            }
+            Image imagenOriginal = iconoOriginal.getImage();
+            Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+            return new ImageIcon(imagenEscalada);
+        } catch (Exception e) {
+            System.err.println("Error cargando imagen " + ruta + ": " + e.getMessage());
+            throw e;
         }
-    });
-
-
-        lblCambiarSede.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                mostrarSeleccionSede();
-            }
-        });
-
-        JLabel lblRegistrar = new JLabel("¿No tienes cuenta? Regístrate");
-        lblRegistrar.setBounds(165, 250, 300, 30);
-        lblRegistrar.setForeground(new Color(0, 102, 204));
-        lblRegistrar.setFont(new Font("Arial", Font.BOLD, 12));
-        lblRegistrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        rightPanel.add(lblRegistrar);
-
-        // Aquí puedes copiar el mismo listener de login que tenías en HomeWindow,
-        // si quieres que lo maneje todo desde esta clase, o simplemente abrir HomeWindow si prefieres.
-
-        btnLogin.addActionListener(e -> {
-            new HomeWindow().setVisible(true);
-            dispose();
-        });
-
-        lblRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new RegisterWindow().setVisible(true);
-                dispose();
-            }
-        });
     }
 
     public static void main(String[] args) {
@@ -158,18 +151,9 @@ public class SeleccionSede extends JFrame {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("No se pudo establecer Look and Feel: " + e.getMessage());
             }
             new SeleccionSede().setVisible(true);
         });
     }
-    
-    private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
-    ImageIcon iconoOriginal = new ImageIcon(getClass().getResource(ruta));
-    Image imagenOriginal = iconoOriginal.getImage();
-    Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
-    return new ImageIcon(imagenEscalada);
 }
-
-}
-
