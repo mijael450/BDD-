@@ -10,14 +10,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class HomeWindow extends JFrame {
+public class LoginWindow extends JFrame {
 
     // Componentes como campos de instancia para mejor acceso
     private JTextField txtCedula;
     private JPasswordField txtPassword;
     private JButton btnLogin;
 
-    public HomeWindow() {
+    public LoginWindow() {
         initializeWindow();
         createComponents();
         setupLayout();

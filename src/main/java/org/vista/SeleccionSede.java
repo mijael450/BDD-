@@ -110,7 +110,7 @@ public class SeleccionSede extends JFrame {
             // Abrir la ventana de login (HomeWindow)
             SwingUtilities.invokeLater(() -> {
                 try {
-                    new HomeWindow().setVisible(true);
+                    new LoginWindow().setVisible(true);
                     dispose();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,

@@ -7,7 +7,6 @@ import java.awt.event.*;
 import java.util.Date;
 import com.toedter.calendar.JDateChooser;
 
-import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 import org.modelo.UserDatabase;
 import org.modelo.Usuario;
 
@@ -83,7 +82,7 @@ volverBtn.addMouseListener(new MouseAdapter() {
     }
 });
 volverBtn.addActionListener(e -> {
-    new HomeWindow().setVisible(true);
+    new LoginWindow().setVisible(true);
     dispose();
 });
 add(volverBtn);
@@ -185,7 +184,7 @@ aplicarRestricciones();
             dispose();
             
              // Agregar estas líneas:
-        new HomeWindow().setVisible(true);
+        new LoginWindow().setVisible(true);
         dispose();
 
         } catch (IllegalArgumentException ex) {

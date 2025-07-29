@@ -3,8 +3,6 @@ package org.vista;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class AdminWindow extends JFrame {
 
@@ -40,7 +38,7 @@ public class AdminWindow extends JFrame {
 
         // Acción de cerrar sesión
         btnCerrarSesion.addActionListener(e -> {
-            new HomeWindow().setVisible(true);
+            new LoginWindow().setVisible(true);
             dispose();
         });
     }}

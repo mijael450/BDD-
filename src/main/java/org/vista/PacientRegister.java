@@ -1,5 +1,7 @@
 package org.vista;
 import org.config.ConexionSQL;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
@@ -29,13 +31,13 @@ public class PacientRegister extends JFrame {
         // ----------------- PANEL IZQUIERDO -----------------
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(230, 230, 230));
+        leftPanel.setBackground(new Color(0, 53, 84));
         leftPanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
         JLabel titulo = new JLabel("REGISTRO DE NUEVO PACIENTE");
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         titulo.setFont(new Font("Arial", Font.BOLD, 20));
-        titulo.setForeground(new Color(50, 50, 50));
+        titulo.setForeground(new Color(255, 255, 255));
         leftPanel.add(titulo);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
@@ -50,7 +52,7 @@ public class PacientRegister extends JFrame {
         // ----------------- PANEL DERECHO (REGISTRO) -----------------
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new GridBagLayout());
-        rightPanel.setBackground(new Color(245, 245, 245));
+        rightPanel.setBackground(new Color(157, 209, 241));
         rightPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -60,11 +62,12 @@ public class PacientRegister extends JFrame {
 
         // Campos de registro
         int row = 0;
+
         
         // Cédula
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Cédula:"), gbc);
+        rightPanel.add(crearLabel("Cédula:"), gbc);
         
         gbc.gridx = 1;
         JTextField txtCedula = new JTextField(20);
@@ -73,7 +76,7 @@ public class PacientRegister extends JFrame {
         // Nombres
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Nombres:"), gbc);
+        rightPanel.add(crearLabel("Nombres:"), gbc);
         
         gbc.gridx = 1;
         JTextField txtNombres = new JTextField(20);
@@ -82,7 +85,7 @@ public class PacientRegister extends JFrame {
         // Apellidos
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Apellidos:"), gbc);
+        rightPanel.add(crearLabel("Apellidos:"), gbc);
         
         gbc.gridx = 1;
         JTextField txtApellidos = new JTextField(20);
@@ -91,7 +94,7 @@ public class PacientRegister extends JFrame {
         // Fecha de Nacimiento
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Fecha Nacimiento (dd/MM/yyyy):"), gbc);
+        rightPanel.add(crearLabel("Fecha Nacimiento (dd/MM/yyyy):"), gbc);
         
         gbc.gridx = 1;
         txtFechaNac = new JFormattedTextField(new SimpleDateFormat("dd/MM/yyyy"));
@@ -101,16 +104,16 @@ public class PacientRegister extends JFrame {
         // Sexo
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Sexo:"), gbc);
+        rightPanel.add(crearLabel("Sexo:"), gbc);
         
         gbc.gridx = 1;
-        cbSexo = new JComboBox<>(new String[]{"Masculino", "Femenino", "Otro"});
+        cbSexo = new JComboBox<>(new String[]{"Masculino", "Femenino"});
         rightPanel.add(cbSexo, gbc);
 
         // Teléfono
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Teléfono:"), gbc);
+        rightPanel.add(crearLabel("Teléfono:"), gbc);
         
         gbc.gridx = 1;
         JTextField txtTelefono = new JTextField(20);
@@ -119,7 +122,7 @@ public class PacientRegister extends JFrame {
         // Email
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Email:"), gbc);
+        rightPanel.add(crearLabel("Email:"), gbc);
         
         gbc.gridx = 1;
         JTextField txtEmail = new JTextField(20);
@@ -128,16 +131,16 @@ public class PacientRegister extends JFrame {
         // Ciudad
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Ciudad:"), gbc);
+        rightPanel.add(crearLabel("Ciudad:"), gbc);
         
         gbc.gridx = 1;
-        cbCiudad = new JComboBox<>(new String[]{"Quito", "Guayaquil", "Cuenca", "Manta", "Portoviejo"});
+        cbCiudad = new JComboBox<>(new String[]{"Quito", "Guayaquil"});
         rightPanel.add(cbCiudad, gbc);
 
         // Dirección
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(new JLabel("Dirección:"), gbc);
+        rightPanel.add(crearLabel("Dirección:"), gbc);
         
         gbc.gridx = 1;
         JTextField txtDireccion = new JTextField(20);
@@ -147,13 +150,15 @@ public class PacientRegister extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = row++;
         gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(30, 8, 8, 8); // ↑ más espacio arriba
         JButton btnRegistrar = new JButton("Registrar Paciente");
         btnRegistrar.setPreferredSize(new Dimension(200, 35));
         btnRegistrar.setBackground(new Color(70, 130, 180));
-        btnRegistrar.setForeground(Color.WHITE);
+        btnRegistrar.setForeground(Color.BLACK);
         btnRegistrar.setFocusPainted(false);
-        btnRegistrar.setFont(new Font("Arial", Font.BOLD, 14));
+        btnRegistrar.setFont(new Font("Arial", Font.BOLD, 16));
         rightPanel.add(btnRegistrar, gbc);
 
         // Acción del botón registrar
@@ -280,6 +285,12 @@ public class PacientRegister extends JFrame {
         Image imagenOriginal = iconoOriginal.getImage();
         Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
         return new ImageIcon(imagenEscalada);
+    }
+
+    private JLabel crearLabel(String texto) {
+        JLabel label = new JLabel(texto);
+        label.setFont(new Font("Arial", Font.PLAIN, 16));
+        return label;
     }
 
     public static void main(String[] args) {

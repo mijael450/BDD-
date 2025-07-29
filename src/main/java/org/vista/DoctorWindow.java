@@ -37,7 +37,7 @@ public class DoctorWindow extends JFrame {
 
         // Acción cerrar sesión
         btnCerrarSesion.addActionListener(e -> {
-            new HomeWindow().setVisible(true);
+            new LoginWindow().setVisible(true);
             dispose();
         });
     }
