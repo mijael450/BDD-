@@ -15,7 +15,7 @@ public class PacienteRegister extends JFrame {
 
     private JComboBox<String> cbSexo;
     private JComboBox<String> cbCiudad;
-    private JFormattedTextField txtFechaNac;
+    private JDateChooser JDateNacimiento;
 
     public PacienteRegister() {
         setTitle("Registro de Nuevo Paciente");
@@ -100,12 +100,12 @@ public class PacienteRegister extends JFrame {
         rightPanel.add(crearLabel("Fecha Nacimiento:"), gbc);
         
         gbc.gridx = 1;
-        JDateChooser dateNacimiento = new JDateChooser();
-        dateNacimiento.setDateFormatString("yyyy-MM-dd");
-        dateNacimiento.setPreferredSize(new Dimension(200,25));
-        dateNacimiento.setFont(new Font("Arial", Font.PLAIN, 16));
-        ((JTextField) dateNacimiento.getDateEditor().getUiComponent()).setEditable(false); // Deshabilita la edición por teclado
-        rightPanel.add(dateNacimiento, gbc);
+        JDateNacimiento = new JDateChooser();
+        JDateNacimiento.setDateFormatString("dd/MM/yyyy");
+        JDateNacimiento.setPreferredSize(new Dimension(200,25));
+        JDateNacimiento.setFont(new Font("Arial", Font.PLAIN, 16));
+        ((JTextField) JDateNacimiento.getDateEditor().getUiComponent()).setEditable(false); // Deshabilita la edición por teclado
+        rightPanel.add(JDateNacimiento, gbc);
 
         // Sexo
         gbc.gridx = 0;
@@ -198,7 +198,13 @@ public class PacienteRegister extends JFrame {
             String cedula = txtCedula.getText().trim();
             String nombres = txtNombres.getText().trim();
             String apellidos = txtApellidos.getText().trim();
-            String fechaNacStr = txtFechaNac.getText().trim();
+            Date fecha = JDateNacimiento.getDate(); // Esto da un objeto Date
+                String fechaNacStr = "";
+    
+                if (fecha != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                    fechaNacStr = sdf.format(fecha);
+                }
             String sexo = (String) cbSexo.getSelectedItem();
             String telefono = txtTelefono.getText().trim();
             String email = txtEmail.getText().trim();
@@ -255,7 +261,7 @@ public class PacienteRegister extends JFrame {
                         insertarPacienteVertical(conn, cedula, nombres, apellidos, fechaNac, sexo, ciudad, telefono, email, direccion, esQuito);
                         
                         JOptionPane.showMessageDialog(this, "Paciente registrado exitosamente!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
-                        limpiarCampos(txtCedula, txtNombres, txtApellidos, txtFechaNac, txtTelefono, txtEmail, txtDireccion);
+                        limpiarCampos(txtCedula, txtNombres, txtApellidos, txtTelefono, txtEmail, txtDireccion);
                     }
                 }
             } catch (SQLException ex) {
@@ -309,7 +315,7 @@ public class PacienteRegister extends JFrame {
         }
         cbSexo.setSelectedIndex(0);
         cbCiudad.setSelectedIndex(0);
-        txtFechaNac.setValue(null);
+        JDateNacimiento.setDate(null);
     }
 
     private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
