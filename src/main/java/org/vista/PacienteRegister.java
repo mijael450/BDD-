@@ -1,6 +1,6 @@
 package org.vista;
+import com.toedter.calendar.JDateChooser;
 import org.config.ConexionSQL;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,13 +11,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class PacientRegister extends JFrame {
+public class PacienteRegister extends JFrame {
 
     private JComboBox<String> cbSexo;
     private JComboBox<String> cbCiudad;
     private JFormattedTextField txtFechaNac;
 
-    public PacientRegister() {
+    public PacienteRegister() {
         setTitle("Registro de Nuevo Paciente");
         setSize(1000, 600);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -71,6 +71,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         JTextField txtCedula = new JTextField(20);
+        txtCedula.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(txtCedula, gbc);
 
         // Nombres
@@ -80,6 +81,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         JTextField txtNombres = new JTextField(20);
+        txtNombres.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(txtNombres, gbc);
 
         // Apellidos
@@ -89,17 +91,21 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         JTextField txtApellidos = new JTextField(20);
+        txtApellidos.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(txtApellidos, gbc);
 
         // Fecha de Nacimiento
         gbc.gridx = 0;
         gbc.gridy = row++;
-        rightPanel.add(crearLabel("Fecha Nacimiento (dd/MM/yyyy):"), gbc);
+        rightPanel.add(crearLabel("Fecha Nacimiento:"), gbc);
         
         gbc.gridx = 1;
-        txtFechaNac = new JFormattedTextField(new SimpleDateFormat("dd/MM/yyyy"));
-        txtFechaNac.setColumns(20);
-        rightPanel.add(txtFechaNac, gbc);
+        JDateChooser dateNacimiento = new JDateChooser();
+        dateNacimiento.setDateFormatString("yyyy-MM-dd");
+        dateNacimiento.setPreferredSize(new Dimension(200,25));
+        dateNacimiento.setFont(new Font("Arial", Font.PLAIN, 16));
+        ((JTextField) dateNacimiento.getDateEditor().getUiComponent()).setEditable(false); // Deshabilita la edición por teclado
+        rightPanel.add(dateNacimiento, gbc);
 
         // Sexo
         gbc.gridx = 0;
@@ -108,6 +114,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         cbSexo = new JComboBox<>(new String[]{"Masculino", "Femenino"});
+        cbSexo.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(cbSexo, gbc);
 
         // Teléfono
@@ -117,6 +124,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         JTextField txtTelefono = new JTextField(20);
+        txtTelefono.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(txtTelefono, gbc);
 
         // Email
@@ -126,6 +134,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         JTextField txtEmail = new JTextField(20);
+        txtEmail.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(txtEmail, gbc);
 
         // Ciudad
@@ -135,6 +144,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         cbCiudad = new JComboBox<>(new String[]{"Quito", "Guayaquil"});
+        cbCiudad.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(cbCiudad, gbc);
 
         // Dirección
@@ -144,6 +154,7 @@ public class PacientRegister extends JFrame {
         
         gbc.gridx = 1;
         JTextField txtDireccion = new JTextField(20);
+        txtDireccion.setFont(new Font("Arial", Font.PLAIN, 16));
         rightPanel.add(txtDireccion, gbc);
 
         // Botón de registro
@@ -160,6 +171,27 @@ public class PacientRegister extends JFrame {
         btnRegistrar.setFocusPainted(false);
         btnRegistrar.setFont(new Font("Arial", Font.BOLD, 16));
         rightPanel.add(btnRegistrar, gbc);
+
+        // Botón de volver
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        gbc.anchor = GridBagConstraints.SOUTHEAST;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.NONE;
+
+        JLabel lblVolverLogin = new JLabel("<html><u>← Volver</u></html>");
+        lblVolverLogin.setForeground(Color.BLUE);
+        lblVolverLogin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblVolverLogin.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        rightPanel.add(lblVolverLogin, gbc);
+
+
+        lblVolverLogin.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                openLoginWindow();
+            }
+        });
 
         // Acción del botón registrar
         btnRegistrar.addActionListener(e -> {
@@ -293,6 +325,19 @@ public class PacientRegister extends JFrame {
         return label;
     }
 
+    private void openLoginWindow() {
+        try {
+            new LoginWindow().setVisible(true);
+            dispose();
+        } catch (Exception e) {
+            showMessage("Error al abrir ventana de login: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showMessage(String message, String title, int messageType) {
+        JOptionPane.showMessageDialog(this, message, title, messageType);
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -300,7 +345,7 @@ public class PacientRegister extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            new PacientRegister().setVisible(true);
+            new PacienteRegister().setVisible(true);
         });
     }
 }

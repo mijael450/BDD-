@@ -287,7 +287,7 @@ public class LoginWindow extends JFrame {
 
     private void openRegisterWindow() {
         try {
-            new RegisterWindow().setVisible(true);
+            new PacienteRegister().setVisible(true);
             dispose();
         } catch (Exception e) {
             showMessage("Error al abrir ventana de registro: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
