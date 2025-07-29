@@ -16,7 +16,9 @@ public class LoginWindow extends JFrame {
     private JTextField txtCedula;
     private JPasswordField txtPassword;
     private JButton btnLogin;
-
+    private JComboBox<String> comboRol;
+    private String admin_id="123";
+    private String admin_name="admin";
     public LoginWindow() {
         initializeWindow();
         createComponents();
@@ -103,8 +105,16 @@ public class LoginWindow extends JFrame {
         txtPassword.setFont(new Font("Arial", Font.PLAIN, 12));
         rightPanel.add(txtPassword);
 
+        // Combo box para iniciar como paciente o administrador 
+        comboRol = new JComboBox<>(new String[]{"Paciente", "Administrador"});
+        comboRol.setBounds(150, 165, 200, 25);
+        comboRol.setFont(new Font("Arial", Font.PLAIN, 14));
+        comboRol.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        rightPanel.add(comboRol);
+        
+        //Boton de login
         btnLogin = new JButton("Iniciar Sesión");
-        btnLogin.setBounds(150, 190, 200, 35);
+        btnLogin.setBounds(150, 200, 200, 35);
         btnLogin.setBackground(new Color(255, 255, 255));
         btnLogin.setForeground(Color.BLACK); // Texto blanco para mejor contraste
         btnLogin.setFocusPainted(false);
@@ -208,36 +218,23 @@ public class LoginWindow extends JFrame {
 
             private Boolean authenticateUser(String nombre, String cedula) {
                 try (Connection conn = ConexionSQL.conectar()) {
-                    // Intentar login como ADMINISTRADOR
-                    String sql = "SELECT nombres FROM Administrador WHERE nombres = ? AND cedula = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, nombre);
-                        ps.setString(2, cedula);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                userName = rs.getString("nombres");
-                                userType = "administrador";
-                                return true;
+                    
+                    // Realiza el login en base al rol elegido en el combo box (Administrador existe internamente)
+                    
+                    //Login si es Administrador (Internamente)
+                    if(comboRol.getSelectedItem().toString().equalsIgnoreCase("Administrador")){
+                        if(nombre.equalsIgnoreCase(admin_name)&& cedula.equalsIgnoreCase(admin_id)){
+                            userName = "Admin";
+                            userType = "Administrador";
+                            return true;
                             }
-                        }
                     }
-
-                    // Intentar login como DOCTOR
-                    sql = "SELECT DOCTOR FROM MEDICO WHERE NOMBRE = ? AND ID_MEDICO = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, nombre);
-                        ps.setString(2, cedula);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                userName = rs.getString("nombres");
-                                userType = "doctor";
-                                return true;
-                            }
-                        }
-                    }
-
-                    // Intentar login como PACIENTE
-                    sql = "SELECT NOMBRE FROM PACIENTE WHERE NOMBRE = ? AND CEDULA = ?";
+                    
+                    
+                    
+                    //  login como PACIENTE
+                    if(comboRol.getSelectedItem().toString().equalsIgnoreCase("Paciente")){
+                    String sql = "SELECT NOMBRE FROM PACIENTE_Q WHERE NOMBRE = ? AND CEDULA = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, nombre);
                         ps.setString(2, cedula);
@@ -249,8 +246,9 @@ public class LoginWindow extends JFrame {
                             }
                         }
                     }
-
+                }
                     return false;
+                    
                 } catch (SQLException e) {
                     throw new RuntimeException("Error de base de datos: " + e.getMessage(), e);
                 }

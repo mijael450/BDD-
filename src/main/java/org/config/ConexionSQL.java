@@ -6,7 +6,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ConexionSQL {
-    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=Centros_Medicos;encrypt=true;trustServerCertificate=true;";
+    private static final String URL = "jdbc:sqlserver://DESKTOP-F1H7GIE:1433;databaseName=BQuito;encrypt=true;trustServerCertificate=true;";
     private static final String USER = "sa";
     private static final String PASSWORD = "P@ssw0rd";
 
@@ -18,4 +18,5 @@ public class ConexionSQL {
             throw new SQLException("No se encontró el driver JDBC.", e);
         }
     }
+    
 }

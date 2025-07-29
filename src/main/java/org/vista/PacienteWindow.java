@@ -3,6 +3,11 @@ package org.vista;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.config.ConexionSQL;
 
 public class PacienteWindow extends JFrame {
 
@@ -24,21 +29,40 @@ public class PacienteWindow extends JFrame {
         panelBotones.setLayout(new GridLayout(4, 1, 10, 10));
         panelBotones.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
 
-        JButton btnRegistrarMedico = new JButton("Registrar Médico");
-        JButton btnVerMedicos = new JButton("Ver Lista de Médicos");
-        JButton btnVerPacientes = new JButton("Ver Lista de Pacientes");
+        JButton btnAgendarCita = new JButton("Agendar Cita");
+        JButton btnVerCitas = new JButton("Ver citas agendadas");
         JButton btnCerrarSesion = new JButton("Cerrar Sesión");
+        btnCerrarSesion.setBackground(Color.red);
 
-        panelBotones.add(btnRegistrarMedico);
-        panelBotones.add(btnVerMedicos);
-        panelBotones.add(btnVerPacientes);
+        panelBotones.add(btnAgendarCita);
+        panelBotones.add(btnVerCitas);
         panelBotones.add(btnCerrarSesion);
 
         add(panelBotones, BorderLayout.CENTER);
-
+        
+        //Accion de Agendar cita
+        btnAgendarCita.addActionListener(e-> {
+            
+          new AgendamientoWindow().setVisible(true);
+            dispose();
+           
+        }       
+        );
+        
+        //Accion de Ver citas agendadas
+        btnVerCitas.addActionListener(e-> {
+            
+          new VistaCitasPaciente().setVisible(true);
+            dispose();
+           
+        }       
+        );
+        
         // Acción de cerrar sesión
         btnCerrarSesion.addActionListener(e -> {
             new LoginWindow().setVisible(true);
             dispose();
         });
+        
+        
     }}
