@@ -5,14 +5,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.awt.event.MouseEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import org.config.Config;  // ✅ correcto
+
+
 
 public class LoginWindow extends JFrame {
 
-    // Componentes como campos de instancia para mejor acceso
     private JTextField txtCedula;
     private JPasswordField txtPassword;
     private JButton btnLogin;
@@ -20,7 +26,6 @@ public class LoginWindow extends JFrame {
     public LoginWindow() {
         initializeWindow();
         createComponents();
-        setupLayout();
         addEventListeners();
     }
 
@@ -33,17 +38,11 @@ public class LoginWindow extends JFrame {
     }
 
     private void createComponents() {
-        // Panel principal dividido en izquierda y derecha
         JPanel mainPanel = new JPanel(new GridLayout(1, 2));
         add(mainPanel, BorderLayout.CENTER);
 
-        // Panel izquierdo
-        JPanel leftPanel = createLeftPanel();
-        mainPanel.add(leftPanel);
-
-        // Panel derecho (login)
-        JPanel rightPanel = createRightPanel();
-        mainPanel.add(rightPanel);
+        mainPanel.add(createLeftPanel());
+        mainPanel.add(createRightPanel());
     }
 
     private JPanel createLeftPanel() {
@@ -55,19 +54,15 @@ public class LoginWindow extends JFrame {
         JLabel titulo = new JLabel("SISTEMA HOSPITALARIO MÉDICO");
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         titulo.setFont(new Font("Arial", Font.BOLD, 20));
-        titulo.setForeground(new Color(255, 255, 255));
+        titulo.setForeground(Color.WHITE);
         leftPanel.add(titulo);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
-        // Imagen con manejo de errores
         try {
-            JLabel imagePlaceholder = new JLabel(escalarImagen("/pngs/hospital_icon.png", 180, 180));
-            imagePlaceholder.setAlignmentX(Component.CENTER_ALIGNMENT);
-            imagePlaceholder.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-            leftPanel.add(imagePlaceholder);
+            JLabel image = new JLabel(escalarImagen("/pngs/hospital_icon.png", 180, 180));
+            image.setAlignmentX(Component.CENTER_ALIGNMENT);
+            leftPanel.add(image);
         } catch (Exception e) {
-            System.err.println("No se pudo cargar la imagen: " + e.getMessage());
-            // Placeholder alternativo si la imagen no se encuentra
             JLabel placeholder = new JLabel("🏥");
             placeholder.setAlignmentX(Component.CENTER_ALIGNMENT);
             placeholder.setFont(new Font("Arial", Font.PLAIN, 80));
@@ -82,68 +77,56 @@ public class LoginWindow extends JFrame {
         rightPanel.setLayout(null);
         rightPanel.setBackground(new Color(157, 209, 241));
 
-        // Campos de login
-        JLabel lblCedula = new JLabel("Nombre:");
-        lblCedula.setBounds(50, 80, 100, 30);
-        lblCedula.setFont(new Font("Arial", Font.BOLD, 14));
-        rightPanel.add(lblCedula);
+        JLabel lblNombre = new JLabel("Nombre:");
+        lblNombre.setBounds(50, 80, 100, 30);
+        lblNombre.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(lblNombre);
 
         txtCedula = new JTextField();
         txtCedula.setBounds(150, 80, 200, 30);
-        txtCedula.setFont(new Font("Arial", Font.PLAIN, 12));
         rightPanel.add(txtCedula);
 
-        JLabel lblPassword = new JLabel("Cédula:");
-        lblPassword.setBounds(50, 130, 100, 30);
-        lblPassword.setFont(new Font("Arial", Font.BOLD, 14));
-        rightPanel.add(lblPassword);
+        JLabel lblCedula = new JLabel("Cédula:");
+        lblCedula.setBounds(50, 130, 100, 30);
+        lblCedula.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(lblCedula);
 
         txtPassword = new JPasswordField();
         txtPassword.setBounds(150, 130, 200, 30);
-        txtPassword.setFont(new Font("Arial", Font.PLAIN, 12));
         rightPanel.add(txtPassword);
 
         btnLogin = new JButton("Iniciar Sesión");
         btnLogin.setBounds(150, 190, 200, 35);
-        btnLogin.setBackground(new Color(255, 255, 255));
-        btnLogin.setForeground(Color.BLACK); // Texto blanco para mejor contraste
-        btnLogin.setFocusPainted(false);
         btnLogin.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(btnLogin);
 
-        // Link de registro
         JLabel lblRegistrar = new JLabel("<html><u>¿No tienes cuenta? Regístrate</u></html>");
         lblRegistrar.setBounds(165, 250, 300, 30);
         lblRegistrar.setForeground(new Color(0, 72, 151));
-        lblRegistrar.setFont(new Font("Arial", Font.BOLD, 12));
         lblRegistrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         rightPanel.add(lblRegistrar);
 
-        // Link cambiar sede
         JLabel lblCambiarSede = new JLabel("<html><u>Cambiar sede</u></html>");
         lblCambiarSede.setBounds(280, 420, 100, 20);
         lblCambiarSede.setForeground(Color.BLUE);
-        lblCambiarSede.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblCambiarSede.setFont(new Font("Arial", Font.PLAIN, 12));
+        lblCambiarSede.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         rightPanel.add(lblCambiarSede);
 
-        // Evento de registro
-        lblRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+        lblRegistrar.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
                 openRegisterWindow();
             }
         });
 
-        // Evento de cambio de sede
-        lblCambiarSede.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+        lblCambiarSede.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
                 openSedeSelectionWindow();
             }
         });
 
-        // Responsive positioning para cambiar sede
-        rightPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
+        rightPanel.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent evt) {
                 lblCambiarSede.setBounds(rightPanel.getWidth() - 120, rightPanel.getHeight() - 40, 100, 20);
             }
         });
@@ -151,53 +134,68 @@ public class LoginWindow extends JFrame {
         return rightPanel;
     }
 
-    private void setupLayout() {
-        // Ya implementado en createComponents()
-    }
-
     private void addEventListeners() {
-        // Login button action
         btnLogin.addActionListener(new LoginActionListener());
-
-        // Enter key para login
         txtPassword.addActionListener(e -> performLogin());
         txtCedula.addActionListener(e -> txtPassword.requestFocus());
     }
 
     private void performLogin() {
-        String nombre = txtCedula.getText().trim();
+        String nombreCompleto = txtCedula.getText().trim();
         String cedula = new String(txtPassword.getPassword()).trim();
 
-        if (nombre.isEmpty() || cedula.isEmpty()) {
+        if (nombreCompleto.isEmpty() || cedula.isEmpty()) {
             showMessage("Por favor ingrese nombre y cédula.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Mostrar indicador de carga
         btnLogin.setText("Validando...");
         btnLogin.setEnabled(false);
 
-        // Ejecutar login en hilo separado para no bloquear la UI
-        SwingWorker<Boolean, Void> loginWorker = new SwingWorker<Boolean, Void>() {
-            private String userType = "";
-            private String userName = "";
+        SwingWorker<Boolean, Void> loginWorker = new SwingWorker<>() {
+            private String userName;
 
             @Override
-            protected Boolean doInBackground() throws Exception {
-                return authenticateUser(nombre, cedula);
+            protected Boolean doInBackground() {
+                return authenticateUser(nombreCompleto, cedula);
+            }
+
+            private Boolean authenticateUser(String nombreCompleto, String cedula) {
+                String tabla = Config.sedeSeleccionada.equalsIgnoreCase("Quito") ? "PACIENTE_Q" : "PACIENTE_G";
+                String sql = "SELECT NOMBRE FROM " + tabla + " WHERE CEDULA = ?";
+
+                try (Connection conn = ConexionSQL.conectar();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                    ps.setString(1, cedula);
+
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            String nombreBD = rs.getString("NOMBRE");
+                            String nombreCompletoBD = nombreBD ;
+
+                            if (nombreCompletoBD.equalsIgnoreCase(nombreCompleto)) {
+                                userName = nombreCompletoBD;
+                                return true;
+                            }
+                        }
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error de base de datos: " + e.getMessage(), e);
+                }
+                return false;
             }
 
             @Override
             protected void done() {
                 btnLogin.setText("Iniciar Sesión");
                 btnLogin.setEnabled(true);
-
                 try {
                     if (get()) {
-                        showMessage("Bienvenido " + userType + ": " + userName, "Acceso concedido", JOptionPane.INFORMATION_MESSAGE);
-                        openUserWindow(userType);
+                        showMessage("Bienvenido: " + nombreCompleto, "Acceso concedido", JOptionPane.INFORMATION_MESSAGE);
+                        openUserWindow();
                     } else {
-                        showMessage("Credenciales inválidas o usuario no registrado.", "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+                        showMessage("Credenciales inválidas.", "Acceso denegado", JOptionPane.ERROR_MESSAGE);
                         clearFields();
                     }
                 } catch (Exception e) {
@@ -205,82 +203,18 @@ public class LoginWindow extends JFrame {
                     e.printStackTrace();
                 }
             }
-
-            private Boolean authenticateUser(String nombre, String cedula) {
-                try (Connection conn = ConexionSQL.conectar()) {
-                    // Intentar login como ADMINISTRADOR
-                    String sql = "SELECT nombres FROM Administrador WHERE nombres = ? AND cedula = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, nombre);
-                        ps.setString(2, cedula);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                userName = rs.getString("nombres");
-                                userType = "administrador";
-                                return true;
-                            }
-                        }
-                    }
-
-                    // Intentar login como DOCTOR
-                    sql = "SELECT DOCTOR FROM MEDICO WHERE NOMBRE = ? AND ID_MEDICO = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, nombre);
-                        ps.setString(2, cedula);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                userName = rs.getString("nombres");
-                                userType = "doctor";
-                                return true;
-                            }
-                        }
-                    }
-
-                    // Intentar login como PACIENTE
-                    sql = "SELECT NOMBRE FROM PACIENTE WHERE NOMBRE = ? AND CEDULA = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                        ps.setString(1, nombre);
-                        ps.setString(2, cedula);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()) {
-                                userName = rs.getString("NOMBRE");
-                                userType = "paciente";
-                                return true;
-                            }
-                        }
-                    }
-
-                    return false;
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error de base de datos: " + e.getMessage(), e);
-                }
-            }
         };
 
         loginWorker.execute();
     }
 
-    private void openUserWindow(String userType) {
+    private void openUserWindow() {
         SwingUtilities.invokeLater(() -> {
             try {
-                switch (userType.toLowerCase()) {
-                    case "administrador":
-                        new AdminWindow().setVisible(true);
-                        break;
-                    case "doctor":
-                        new DoctorWindow().setVisible(true);
-                        break;
-                    case "paciente":
-                        new PacienteWindow().setVisible(true);
-                        break;
-                    default:
-                        showMessage("Tipo de usuario no reconocido", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                }
+                new PacienteWindow().setVisible(true);
                 dispose();
             } catch (Exception e) {
-                showMessage("Error al abrir la ventana: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
+                showMessage("Error al abrir la ventana del paciente: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
     }
@@ -309,8 +243,8 @@ public class LoginWindow extends JFrame {
         txtCedula.requestFocus();
     }
 
-    private void showMessage(String message, String title, int messageType) {
-        JOptionPane.showMessageDialog(this, message, title, messageType);
+    private void showMessage(String message, String title, int type) {
+        JOptionPane.showMessageDialog(this, message, title, type);
     }
 
     private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
@@ -323,15 +257,11 @@ public class LoginWindow extends JFrame {
             Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
             return new ImageIcon(imagenEscalada);
         } catch (Exception e) {
-            System.err.println("Error cargando imagen " + ruta + ": " + e.getMessage());
-            // Retornar un icono por defecto o lanzar excepción
             throw e;
         }
     }
 
-    // Clase interna para manejar el evento de login
     private class LoginActionListener implements ActionListener {
-        @Override
         public void actionPerformed(ActionEvent e) {
             performLogin();
         }
@@ -341,9 +271,7 @@ public class LoginWindow extends JFrame {
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception e) {
-                System.err.println("No se pudo establecer Look and Feel: " + e.getMessage());
-            }
+            } catch (Exception ignored) {}
             new SeleccionSede().setVisible(true);
         });
     }
