@@ -21,30 +21,87 @@ public class AgendamientoWindow extends JFrame {
     private JTable tablaHorarios;
     private DefaultTableModel modeloTabla;
     private JScrollPane scrollTabla;
+    private String nombrePaciente;
+    private String cedulaPaciente;
+
+    public AgendamientoWindow(String nombrePaciente, String cedulaPaciente) throws HeadlessException {
+        this.nombrePaciente = nombrePaciente;
+        this.cedulaPaciente = cedulaPaciente;
+    }
 
     public AgendamientoWindow() {
         setTitle("Gestión de Citas Médicas");
-        setSize(700, 500);
+        setSize(900, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Panel principal
-        JPanel panelFormulario = new JPanel();
-        panelFormulario.setLayout(new GridLayout(6, 2, 10, 10));
+
+        // -------- PANEL IZQUIERDO (Imagen + info paciente) --------
+        JPanel panelIzquierdo = new JPanel();
+        panelIzquierdo.setLayout(new BoxLayout(panelIzquierdo, BoxLayout.Y_AXIS));
+        panelIzquierdo.setPreferredSize(new Dimension(250, 500));
+        panelIzquierdo.setBackground(new Color(0, 53, 84));
+        panelIzquierdo.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+
+        try {
+            JLabel imagePlaceholder = new JLabel(escalarImagen("/pngs/medcalen.png", 180, 180));
+            imagePlaceholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+            imagePlaceholder.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+            panelIzquierdo.add(imagePlaceholder);
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar la imagen: " + e.getMessage());
+            JLabel placeholder = new JLabel("🏥");
+            placeholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+            placeholder.setFont(new Font("Arial", Font.PLAIN, 80));
+            panelIzquierdo.add(placeholder);
+        }
+
+        JLabel lblNombre = new JLabel("Nombre del Paciente:");
+        lblNombre.setForeground(Color.WHITE);
+        lblNombre.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel lblNombreValue = new JLabel(nombrePaciente);
+        lblNombreValue.setForeground(Color.WHITE);
+        lblNombreValue.setFont(new Font("Arial", Font.PLAIN, 14));
+        JLabel lblCedula = new JLabel("Cédula:");
+        lblCedula.setForeground(Color.WHITE);
+        lblCedula.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel lblCedulaValue = new JLabel(cedulaPaciente);
+        lblCedulaValue.setForeground(Color.WHITE);
+        lblCedulaValue.setFont(new Font("Arial", Font.PLAIN, 14));
+
+
+
+        lblNombre.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblNombreValue.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblCedula.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblCedulaValue.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panelIzquierdo.add(Box.createRigidArea(new Dimension(0, 20)));
+        panelIzquierdo.add(lblNombre);
+        panelIzquierdo.add(lblNombreValue);
+        panelIzquierdo.add(Box.createRigidArea(new Dimension(0, 10)));
+        panelIzquierdo.add(lblCedula);
+        panelIzquierdo.add(lblCedulaValue);
+
+        // -------- PANEL DERECHO (Formulario + tabla) --------
+        JPanel panelDerecho = new JPanel();
+        panelDerecho.setLayout(new BorderLayout());
+        panelDerecho.setBackground(new Color(157, 209, 241));
+
+        JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 10, 10));
         panelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panelFormulario.setBackground(new Color(157, 209, 241));
 
-        // Campo: Cédula del Paciente
-        panelFormulario.add(new JLabel("Cédula del Paciente:"));
-        txtCedulaPaciente = new JTextField();
-        panelFormulario.add(txtCedulaPaciente);
 
-        // Campo: Especialidad Médica
+//        panelFormulario.add(new JLabel("Cédula del Paciente:"));
+//        txtCedulaPaciente = new JTextField();
+//        panelFormulario.add(txtCedulaPaciente);
+
         panelFormulario.add(new JLabel("Especialidad Médica:"));
         cmbEspecialidad = new JComboBox<>();
         panelFormulario.add(cmbEspecialidad);
 
-        // Campo: Médico
         panelFormulario.add(new JLabel("Médico:"));
         cmbMedico = new JComboBox<>();
         panelFormulario.add(cmbMedico);
@@ -52,35 +109,36 @@ public class AgendamientoWindow extends JFrame {
         cmbEspecialidad.addActionListener(e -> cargarMedicos());
         cargarEspecialidadesDesdeDB();
 
-        // Campo: Fecha
         panelFormulario.add(new JLabel("Fecha:"));
         dateChooser = new JDateChooser();
         dateChooser.setDateFormatString("yyyy-MM-dd");
         panelFormulario.add(dateChooser);
 
-        // Botón buscar horarios
         jButton_BuscarHorarios = new JButton("Buscar Horarios Disponibles");
         jButton_BuscarHorarios.addActionListener(e -> buscarHorarios());
         panelFormulario.add(jButton_BuscarHorarios);
 
-        // Botón agendar cita
         jButton_AgendarCita = new JButton("Agendar Cita");
         jButton_AgendarCita.setBackground(new Color(76, 175, 80));
         jButton_AgendarCita.setForeground(Color.WHITE);
         jButton_AgendarCita.addActionListener(e -> agendarCitaEnDB());
         panelFormulario.add(jButton_AgendarCita);
 
-        // Panel para tabla de horarios
+        // Tabla de horarios
         String[] columnas = {"Hora", "Estado"};
         modeloTabla = new DefaultTableModel(columnas, 0);
         tablaHorarios = new JTable(modeloTabla);
         scrollTabla = new JScrollPane(tablaHorarios);
         scrollTabla.setVisible(false);
 
-        // Agregar componentes al JFrame
-        add(panelFormulario, BorderLayout.NORTH);
-        add(scrollTabla, BorderLayout.CENTER);
+        panelDerecho.add(panelFormulario, BorderLayout.NORTH);
+        panelDerecho.add(scrollTabla, BorderLayout.CENTER);
 
+        // Añadir los paneles al frame principal
+        add(panelIzquierdo, BorderLayout.WEST);
+        add(panelDerecho, BorderLayout.CENTER);
+
+        // Configurar el selector de fechas
         dateChooser.setMinSelectableDate(new Date());
         ((JTextField) dateChooser.getDateEditor().getUiComponent()).setEditable(false);
 
@@ -372,60 +430,74 @@ public class AgendamientoWindow extends JFrame {
         }
     }
 
+    /**
+     * Valida si un paciente existe en la base de datos
+     */
+    private boolean validarPaciente(String cedula) throws SQLException {
+        String sql = "SELECT 1 FROM PACIENTE_Q WHERE CEDULA = ?";
+        try (Connection conn = ConexionSQL.conectar();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, cedula);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    /**
+     * Obtiene el ID de un médico por su nombre
+     */
+    private int obtenerIdMedico(Connection conn, String nombreMedico) throws SQLException {
+        String sql = "SELECT ID_MEDICO FROM MEDICO_Q WHERE NOMBRE = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, nombreMedico);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt("ID_MEDICO") : -1;
+            }
+        }
+    }
+
+    /**
+     * Obtiene el ID del centro donde trabaja un médico
+     */
+    private int obtenerIdCentroMedico(Connection conn, int idMedico) throws SQLException {
+        String sql = "SELECT ID_CENTRO FROM MEDICO_Q WHERE ID_MEDICO = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idMedico);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
+            }
+        }
+    }
+
+    private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
+        try {
+            ImageIcon iconoOriginal = new ImageIcon(getClass().getResource(ruta));
+            if (iconoOriginal.getIconWidth() == -1) {
+                throw new IllegalArgumentException("Imagen no encontrada: " + ruta);
+            }
+            Image imagenOriginal = iconoOriginal.getImage();
+            Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+            return new ImageIcon(imagenEscalada);
+        } catch (Exception e) {
+            System.err.println("Error cargando imagen " + ruta + ": " + e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * Genera un nuevo ID para la cita
+     */
+    private int generarNuevoIdCita(Connection conn) throws SQLException {
+        String sql = "SELECT MAX(ID_CITA) + 1 AS NUEVO_ID FROM CITA_Q";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            return rs.next() ? rs.getInt("NUEVO_ID") : 1;
+        }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new AgendamientoWindow());
     }
-    
-    /**
- * Valida si un paciente existe en la base de datos
- */
-private boolean validarPaciente(String cedula) throws SQLException {
-    String sql = "SELECT 1 FROM PACIENTE_Q WHERE CEDULA = ?";
-    try (Connection conn = ConexionSQL.conectar();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        pstmt.setString(1, cedula);
-        try (ResultSet rs = pstmt.executeQuery()) {
-            return rs.next();
-        }
-    }
-}
 
-/**
- * Obtiene el ID de un médico por su nombre
- */
-private int obtenerIdMedico(Connection conn, String nombreMedico) throws SQLException {
-    String sql = "SELECT ID_MEDICO FROM MEDICO_Q WHERE NOMBRE = ?";
-    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        pstmt.setString(1, nombreMedico);
-        try (ResultSet rs = pstmt.executeQuery()) {
-            return rs.next() ? rs.getInt("ID_MEDICO") : -1;
-        }
-    }
-}
-
-/**
- * Obtiene el ID del centro donde trabaja un médico
- */
-private int obtenerIdCentroMedico(Connection conn, int idMedico) throws SQLException {
-    String sql = "SELECT ID_CENTRO FROM MEDICO_Q WHERE ID_MEDICO = ?";
-    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        pstmt.setInt(1, idMedico);
-        try (ResultSet rs = pstmt.executeQuery()) {
-            return rs.next() ? rs.getInt("ID_CENTRO") : -1;
-        }
-    }
-}
-
-/**
- * Genera un nuevo ID para la cita
- */
-private int generarNuevoIdCita(Connection conn) throws SQLException {
-    String sql = "SELECT MAX(ID_CITA) + 1 AS NUEVO_ID FROM CITA_Q";
-    try (Statement stmt = conn.createStatement();
-         ResultSet rs = stmt.executeQuery(sql)) {
-        return rs.next() ? rs.getInt("NUEVO_ID") : 1;
-    }
-}
-    
-    
 }
