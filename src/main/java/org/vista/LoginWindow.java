@@ -185,7 +185,7 @@ public class LoginWindow extends JFrame {
                 try {
                     if (get()) {
                         showMessage("Bienvenido: " + nombreCompleto, "Acceso concedido", JOptionPane.INFORMATION_MESSAGE);
-                        openUserWindow();
+                        openUserWindow(userType);
                     } else {
                         showMessage("Credenciales inválidas.", "Acceso denegado", JOptionPane.ERROR_MESSAGE);
                         clearFields();
@@ -240,11 +240,16 @@ public class LoginWindow extends JFrame {
         loginWorker.execute();
     }
 
-    private void openUserWindow() {
+    private void openUserWindow(String type) {
         SwingUtilities.invokeLater(() -> {
             try {
-                new PacienteWindow().setVisible(true);
-                dispose();
+                if(type.equalsIgnoreCase("paciente")){
+                    new PacienteWindow().setVisible(true);
+                    dispose();
+                }else{
+                    new AdminWindow().setVisible(true);
+                    dispose();
+                }
             } catch (Exception e) {
                 showMessage("Error al abrir la ventana del paciente: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
