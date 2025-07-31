@@ -422,6 +422,8 @@ public class AgendamientoWindow extends JFrame {
     Connection conn = null;
     try {
         conn = ConexionSQL.conectar();
+        //System.out.println("Base de datos conectada: " + conn.getCatalog());
+
         conn.setAutoCommit(false); // Iniciar transacción
 
         // 1. Obtener ID del médico
@@ -431,7 +433,7 @@ public class AgendamientoWindow extends JFrame {
         }
 
         // 2. Obtener ID del centro (aleatorio entre 101, 102, 103)
-        int idCentro = obtenerCentroAleatorio();
+        int idCentro = obtenerIdCentroMedico(idMedico);//obtenerCentroAleatorio();
 
         // 3. Generar ID de cita
         int idCita = generarNuevoIdCita(conn);
