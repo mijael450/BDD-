@@ -6,9 +6,6 @@ import java.sql.SQLException;
 
 public class ConexionSQL {
 
-    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=BQuito;encrypt=true;trustServerCertificate=true;";
-
-
     private static final String USER = "sa";
     private static final String PASSWORD = "P@ssw0rd";
 
@@ -18,9 +15,18 @@ public class ConexionSQL {
             throw new SQLException("La sede no ha sido seleccionada.");
         }
 
-        String base = sede.equalsIgnoreCase("Quito") ? "BQuito" : "BGUAYAQUIL";
+        String host;
+        String base;
 
-        String url = "jdbc:sqlserver://localhost:1433;databaseName=" + base +
+        if (sede.equalsIgnoreCase("Quito")) {
+            host = "localhost"; // ← IP del servidor donde está BQuito
+            base = "BQuito";
+        } else {
+            host = "26.148.216.126";
+            base = "BGuayaquil";
+        }
+
+        String url = "jdbc:sqlserver://" + host + ":1433;databaseName=" + base +
                      ";encrypt=true;trustServerCertificate=true;";
 
         try {
@@ -30,5 +36,4 @@ public class ConexionSQL {
             throw new SQLException("No se encontró el driver JDBC.", e);
         }
     }
-    
 }

@@ -42,4 +42,10 @@ public class AdminWindow extends JFrame {
             new LoginWindow(this.sedeSelect).setVisible(true);
             dispose();
         });
+        
+        btnRegistrarMedico.addActionListener(e -> {
+            new DoctorRegister(this.sedeSelect).setVisible(true);
+            dispose();
+        });
+        
     }}
