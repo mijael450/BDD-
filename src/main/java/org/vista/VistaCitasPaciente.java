@@ -5,101 +5,117 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class VistaCitasPaciente extends JFrame {
 
-    private JTextField txtCedula;
-    private JButton btnBuscar;
     private JTable tablaCitas;
     private DefaultTableModel modeloTabla;
-
-    public VistaCitasPaciente() {
-        setTitle("Consulta de Citas por Paciente");
-        setSize(800, 600);
+    private String nombrePaciente;
+    private String cedulaPaciente;
+    private String sedeSelect;
+    public VistaCitasPaciente(String nombrePaciente, String cedulaPaciente,String sedeSelect) {
+        this.nombrePaciente = nombrePaciente;
+        this.cedulaPaciente = cedulaPaciente;
+        this.sedeSelect = sedeSelect;
+        setTitle("Citas de " + nombrePaciente);
+        setSize(850, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Panel superior para búsqueda
-        JPanel panelBusqueda = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panelBusqueda.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // ---------- PANEL SUPERIOR ----------
+        JPanel panelSuperior = new JPanel(new BorderLayout());
+        panelSuperior.setBackground(new Color(157, 209, 241));
+        panelSuperior.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        panelBusqueda.add(new JLabel("Cédula del Paciente:"));
-        txtCedula = new JTextField(15);
-        panelBusqueda.add(txtCedula);
+        JLabel lblTitulo = new JLabel("Citas de " + nombrePaciente);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setForeground(new Color(0, 53, 84));
+        panelSuperior.add(lblTitulo, BorderLayout.WEST);
 
-        btnBuscar = new JButton("Buscar Citas");
-        btnBuscar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                buscarCitasPorPaciente();
-            }
+        JButton btnAgendar = new JButton("Agendar Nueva Cita");
+        btnAgendar.setBackground(new Color(0, 120, 215));
+        btnAgendar.setForeground(Color.WHITE);
+        btnAgendar.setFocusPainted(false);
+        btnAgendar.setFont(new Font("Arial", Font.PLAIN, 14));
+        btnAgendar.addActionListener(e -> {
+            new AgendamientoWindow(nombrePaciente, cedulaPaciente, this.sedeSelect);
+            dispose();
         });
-        panelBusqueda.add(btnBuscar);
+        panelSuperior.add(btnAgendar, BorderLayout.EAST);
 
-        add(panelBusqueda, BorderLayout.NORTH);
+        add(panelSuperior, BorderLayout.NORTH);
 
-        // Modelo de tabla para mostrar las citas
+        // ---------- TABLA ----------
         String[] columnas = {"ID Cita", "Fecha", "Hora", "Médico", "Especialidad", "Centro Médico"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
-            @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Hacer que la tabla no sea editable
+                return false;
             }
         };
 
         tablaCitas = new JTable(modeloTabla);
-        tablaCitas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        // Mejorar el renderizado de la tabla
         tablaCitas.setRowHeight(25);
-        tablaCitas.setFont(new Font("Arial", Font.PLAIN, 12));
+        tablaCitas.setFont(new Font("Arial", Font.PLAIN, 13));
         tablaCitas.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
 
         JScrollPane scrollPane = new JScrollPane(tablaCitas);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Botón para imprimir o exportar (opcional)
-        JButton btnImprimir = new JButton("Imprimir/Exportar");
-        btnImprimir.addActionListener(e -> exportarCitas());
-        add(btnImprimir, BorderLayout.SOUTH);
+        // ---------- PANEL INFERIOR ----------
+        JPanel panelSur = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        panelSur.setBackground(Color.WHITE);
+        panelSur.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JButton btnExportar = new JButton("Exportar");
+        btnExportar.setBackground(new Color(76, 175, 80));
+        btnExportar.setForeground(Color.WHITE);
+        btnExportar.setFocusPainted(false);
+        btnExportar.setFont(new Font("Arial", Font.PLAIN, 13));
+        btnExportar.addActionListener(e -> exportarCitas());
+
+        JButton btnRegresar = new JButton("Regresar");
+        btnRegresar.setBackground(new Color(200, 200, 200));
+        btnRegresar.setForeground(Color.BLACK);
+        btnRegresar.setFocusPainted(false);
+        btnRegresar.setFont(new Font("Arial", Font.PLAIN, 13));
+        btnRegresar.addActionListener(e -> {
+            new PacienteWindow(nombrePaciente, cedulaPaciente, this.sedeSelect).setVisible(true);
+            dispose();
+        });
+
+        panelSur.add(btnRegresar);
+        panelSur.add(btnExportar);
+
+        add(panelSur, BorderLayout.SOUTH);
+
+        // ---------- CONSULTA AUTOMÁTICA ----------
+        buscarCitasDesdeDB();
+
+        setVisible(true);
     }
 
-    private void buscarCitasPorPaciente() {
-        String cedula = txtCedula.getText().trim();
-        
-        if (cedula.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Por favor ingrese un número de cédula", 
-                "Error", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        modeloTabla.setRowCount(0); // Limpiar tabla antes de nueva búsqueda
+    private void buscarCitasDesdeDB() {
+        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+        modeloTabla.setRowCount(0);
 
         String sql = "SELECT c.ID_CITA, c.FECHA, c.HORA, m.NOMBRE AS MEDICO, " +
                      "e.NOMBRE AS ESPECIALIDAD, cen.NOMBRE AS CENTRO " +
-                     "FROM CITA_Q c " +
-                     "JOIN PACIENTE_CITA_Q pc ON c.ID_CITA = pc.ID_CITA " +
-                     "JOIN MEDICO_Q m ON c.ID_MEDICO = m.ID_MEDICO " +
+                     "FROM CITA_"+tableSuffix+" c " +
+                     "JOIN PACIENTE_CITA_"+tableSuffix+" pc ON c.ID_CITA = pc.ID_CITA " +
+                     "JOIN MEDICO_"+tableSuffix+" m ON c.ID_MEDICO = m.ID_MEDICO " +
                      "JOIN ESPECIALIDAD e ON m.ID_ESPECIALIDAD = e.ID_ESPECIALIDAD " +
-                     "JOIN CENTRO_Q cen ON c.ID_CENTRO = cen.ID_CENTRO " +
+                     "JOIN CENTRO_"+tableSuffix+" cen ON c.ID_CENTRO = cen.ID_CENTRO " +
                      "WHERE pc.CEDULA = ? " +
                      "ORDER BY c.FECHA DESC, c.HORA DESC";
 
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, cedula);
-            
+
+            pstmt.setString(1, cedulaPaciente);
+
             try (ResultSet rs = pstmt.executeQuery()) {
-                int contador = 0;
-                
                 while (rs.next()) {
-                    contador++;
                     Object[] fila = {
                         rs.getInt("ID_CITA"),
                         rs.getDate("FECHA"),
@@ -110,54 +126,41 @@ public class VistaCitasPaciente extends JFrame {
                     };
                     modeloTabla.addRow(fila);
                 }
-                
-                if (contador == 0) {
-                    JOptionPane.showMessageDialog(this, 
-                        "No se encontraron citas para el paciente con cédula: " + cedula, 
-                        "Resultados", 
-                        JOptionPane.INFORMATION_MESSAGE);
-                }
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, 
-                "Error al buscar citas: " + ex.getMessage(), 
-                "Error de Base de Datos", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Error al buscar citas: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
     }
 
     private void exportarCitas() {
-        // Implementación básica para exportar a CSV
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Guardar citas como CSV");
-        
+
         if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getPath();
             if (!filePath.toLowerCase().endsWith(".csv")) {
                 filePath += ".csv";
             }
-            
-            // Lógica para exportar (simplificada)
+
             try {
-                // Aquí iría el código para generar el CSV
-                JOptionPane.showMessageDialog(this, 
-                    "Datos exportados exitosamente a: " + filePath, 
-                    "Exportación Completa", 
-                    JOptionPane.INFORMATION_MESSAGE);
+                // Aquí puedes agregar el código real para exportar a CSV si lo necesitas
+                JOptionPane.showMessageDialog(this,
+                    "Datos exportados exitosamente a: " + filePath,
+                    "Exportación", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, 
-                    "Error al exportar: " + ex.getMessage(), 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                    "Error al exportar: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            VistaCitasPaciente vista = new VistaCitasPaciente();
-            vista.setVisible(true);
+            new VistaCitasPaciente("Juan Pérez", "1234567890","");
         });
     }
 }

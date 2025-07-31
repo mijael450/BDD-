@@ -5,8 +5,9 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AdminWindow extends JFrame {
-
-    public AdminWindow() {
+    private String sedeSelect;
+    public AdminWindow(String sedeSelect) {
+        this.sedeSelect = sedeSelect;
         setTitle("Panel del Administrador");
         setSize(600, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -38,7 +39,7 @@ public class AdminWindow extends JFrame {
 
         // Acción de cerrar sesión
         btnCerrarSesion.addActionListener(e -> {
-            new LoginWindow().setVisible(true);
+            new LoginWindow(this.sedeSelect).setVisible(true);
             dispose();
         });
     }}

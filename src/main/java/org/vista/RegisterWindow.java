@@ -15,8 +15,8 @@ public class RegisterWindow extends JFrame {
     private JPasswordField contrasenaField;
     private JComboBox<String> sexoComboBox;
     private JDateChooser fechaNacimientoChooser;
-
-    public RegisterWindow() {
+    private String sedeSelect;
+    public RegisterWindow(String sedeSelect) {
         setTitle("Registro de Paciente");
         setSize(600, 500);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -82,7 +82,7 @@ volverBtn.addMouseListener(new MouseAdapter() {
     }
 });
 volverBtn.addActionListener(e -> {
-    new LoginWindow().setVisible(true);
+    new LoginWindow(this.sedeSelect).setVisible(true);
     dispose();
 });
 add(volverBtn);
@@ -184,7 +184,7 @@ aplicarRestricciones();
             dispose();
             
              // Agregar estas líneas:
-        new LoginWindow().setVisible(true);
+        new LoginWindow(this.sedeSelect).setVisible(true);
         dispose();
 
         } catch (IllegalArgumentException ex) {

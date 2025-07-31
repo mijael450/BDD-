@@ -16,8 +16,10 @@ public class PacienteRegister extends JFrame {
     private JComboBox<String> cbSexo;
     private JComboBox<String> cbCiudad;
     private JDateChooser JDateNacimiento;
+    private String sedeSelect;
 
-    public PacienteRegister() {
+    public PacienteRegister(String sedeSelect) {
+        this.sedeSelect = sedeSelect;
         setTitle("Registro de Nuevo Paciente");
         setSize(1000, 600);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -333,7 +335,7 @@ public class PacienteRegister extends JFrame {
 
     private void openLoginWindow() {
         try {
-            new LoginWindow().setVisible(true);
+            new LoginWindow(this.sedeSelect).setVisible(true);
             dispose();
         } catch (Exception e) {
             showMessage("Error al abrir ventana de login: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -351,7 +353,7 @@ public class PacienteRegister extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            new PacienteRegister().setVisible(true);
+            new PacienteRegister("").setVisible(true);
         });
     }
 }

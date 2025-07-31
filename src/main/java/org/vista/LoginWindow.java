@@ -25,10 +25,16 @@ public class LoginWindow extends JFrame {
     private JComboBox<String> comboRol;
     private String admin_id="123";
     private String admin_name="admin";
-    public LoginWindow() {
+    private String userName;
+    private String userpass;
+    private String userType;
+    private String sedeSelect;
+    
+    public LoginWindow(String sedeSelect) {
         initializeWindow();
         createComponents();
         addEventListeners();
+        this.sedeSelect = sedeSelect;
     }
 
     private void initializeWindow() {
@@ -48,6 +54,7 @@ public class LoginWindow extends JFrame {
     }
 
     private JPanel createLeftPanel() {
+       
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBackground(new Color(0, 53, 84));
@@ -169,8 +176,7 @@ public class LoginWindow extends JFrame {
         btnLogin.setEnabled(false);
 
         SwingWorker<Boolean, Void> loginWorker = new SwingWorker<>() {
-            private String userName;
-            private String userType;
+            
             @Override
             protected Boolean doInBackground() {
                 return authenticateUser(nombreCompleto, cedula);
@@ -199,7 +205,7 @@ public class LoginWindow extends JFrame {
 
             private Boolean authenticateUser(String nombre, String cedula) {
                 try (Connection conn = ConexionSQL.conectar()) {
-                    
+                     String tableSuffix = LoginWindow.this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
                     // Realiza el login en base al rol elegido en el combo box (Administrador existe internamente)
                     
                     //Login si es Administrador (Internamente)
@@ -214,8 +220,9 @@ public class LoginWindow extends JFrame {
                     
                     
                     //  login como PACIENTE
+                    
                     if(comboRol.getSelectedItem().toString().equalsIgnoreCase("Paciente")){
-                    String sql = "SELECT NOMBRE FROM PACIENTE_Q WHERE NOMBRE = ? AND CEDULA = ?";
+                    String sql = "SELECT NOMBRE FROM PACIENTE_"+ tableSuffix +" WHERE NOMBRE = ? AND CEDULA = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, nombre);
                         ps.setString(2, cedula);
@@ -223,6 +230,7 @@ public class LoginWindow extends JFrame {
                             if (rs.next()) {
                                 userName = rs.getString("NOMBRE");
                                 userType = "paciente";
+                                userpass = cedula;
                                 return true;
                             }
                         }
@@ -244,10 +252,10 @@ public class LoginWindow extends JFrame {
         SwingUtilities.invokeLater(() -> {
             try {
                 if(type.equalsIgnoreCase("paciente")){
-                    new PacienteWindow().setVisible(true);
+                    new PacienteWindow(userName, userpass,this.sedeSelect).setVisible(true);
                     dispose();
                 }else{
-                    new AdminWindow().setVisible(true);
+                    new AdminWindow(this.sedeSelect).setVisible(true);
                     dispose();
                 }
             } catch (Exception e) {
@@ -258,7 +266,7 @@ public class LoginWindow extends JFrame {
 
     private void openRegisterWindow() {
         try {
-            new PacienteRegister().setVisible(true);
+            new PacienteRegister(this.sedeSelect).setVisible(true);
             dispose();
         } catch (Exception e) {
             showMessage("Error al abrir ventana de registro: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

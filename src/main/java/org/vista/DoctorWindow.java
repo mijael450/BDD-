@@ -5,8 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DoctorWindow extends JFrame {
-
-    public DoctorWindow() {
+    private String sedeSelect;
+    public DoctorWindow(String sedeSelect) {
         setTitle("Panel del Doctor");
         setSize(600, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -37,12 +37,12 @@ public class DoctorWindow extends JFrame {
 
         // Acción cerrar sesión
         btnCerrarSesion.addActionListener(e -> {
-            new LoginWindow().setVisible(true);
+            new LoginWindow(this.sedeSelect).setVisible(true);
             dispose();
         });
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new DoctorWindow().setVisible(true));
+        SwingUtilities.invokeLater(() -> new DoctorWindow("").setVisible(true));
     }
 }

@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class SeleccionSede extends JFrame {
+    private String sedeSelect;
 
     private final JComboBox<String> comboSede;
 
@@ -91,8 +92,9 @@ public class SeleccionSede extends JFrame {
         // Evento del botón continuar
         btnContinuar.addActionListener(e -> {
             // Guardar la sede seleccionada en la configuración
+            
             Config.sedeSeleccionada = comboSede.getSelectedItem().toString();
-
+            this.sedeSelect=comboSede.getSelectedItem().toString();
             // Confirmar la sede seleccionada con el usuario
             int confSedeSelecc = JOptionPane.showConfirmDialog(
                     this,
@@ -110,7 +112,7 @@ public class SeleccionSede extends JFrame {
             // Abrir la ventana de login (HomeWindow)
             SwingUtilities.invokeLater(() -> {
                 try {
-                    new LoginWindow().setVisible(true);
+                    new LoginWindow(this.sedeSelect).setVisible(true);
                     dispose();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,

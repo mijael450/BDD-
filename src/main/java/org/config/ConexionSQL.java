@@ -18,7 +18,7 @@ public class ConexionSQL {
             throw new SQLException("La sede no ha sido seleccionada.");
         }
 
-        String base = sede.equalsIgnoreCase("Quito") ? "BQuito" : "BGye";
+        String base = sede.equalsIgnoreCase("Quito") ? "BQuito" : "BGUAYAQUIL";
 
         String url = "jdbc:sqlserver://localhost:1433;databaseName=" + base +
                      ";encrypt=true;trustServerCertificate=true;";
