@@ -19,15 +19,15 @@ public class ConexionSQL {
         String base;
 
         if (sede.equalsIgnoreCase("Quito")) {
-            host = "localhost"; // ← IP del servidor donde está BQuito
-            base = "BQuito";
+            host = "26.12.213.160"; // ← IP del servidor donde está BQuito
+            base = "BQuito1";
         } else {
-            host = "26.148.216.126";
-            base = "BGuayaquil";
+            host = "localhost";
+            base = "BGuayaquil1";
         }
 
         String url = "jdbc:sqlserver://" + host + ":1433;databaseName=" + base +
-                     ";encrypt=true;trustServerCertificate=true;";
+                ";encrypt=true;trustServerCertificate=true;";
 
         try {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
