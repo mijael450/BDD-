@@ -13,8 +13,10 @@ public class DoctorRegister extends JFrame {
 
     private JComboBox<String> cbEspecialidad;
     private JComboBox<String> cbCentro;
+    private String sedeSelect;
 
-    public DoctorRegister() {
+    public DoctorRegister(String sedeSelect) {
+        this.sedeSelect = sedeSelect;
         setTitle("Registro de Nuevo Doctor");
         setSize(900, 500);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -289,7 +291,7 @@ private void insertarMedicoVerticalG(Connection conn, int idMedico, String nombr
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            new DoctorRegister().setVisible(true);
+            new DoctorRegister("").setVisible(true);
         });
     }
     
