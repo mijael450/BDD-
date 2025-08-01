@@ -94,10 +94,10 @@ public class AdminWindow extends JFrame {
             dispose();
         });
 
-//        btnVerMedicos.addActionListener(e -> {
-//            new DoctorList(this.sedeSelect).setVisible(true);
-//            dispose();
-//        });
+        btnVerMedicos.addActionListener(e -> {
+            new ListaMedicosWindow(this.sedeSelect).setVisible(true);
+            dispose();
+        });
 
 
 
