@@ -59,7 +59,7 @@ public class AdminWindow extends JFrame {
     private JPanel createRightPanel() {
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(null);
-        rightPanel.setBackground(new Color(225, 240, 252));
+        rightPanel.setBackground(new Color(157, 209, 241));
 
         Font fontBoton = new Font("Arial", Font.BOLD, 14);
         Color colorBoton = new Color(255, 255, 255);  // Blanco
@@ -101,10 +101,10 @@ public class AdminWindow extends JFrame {
 
 
 
-//        btnVerPacientes.addActionListener(e -> {
-//            new PatientList(this.sedeSelect).setVisible(true);
-//            dispose();
-//        });
+        btnVerPacientes.addActionListener(e -> {
+            new ListaPacientesWindow(this.sedeSelect).setVisible(true);
+            dispose();
+        });
 
         return rightPanel;
     }
