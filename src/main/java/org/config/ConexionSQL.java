@@ -36,4 +36,22 @@ public class ConexionSQL {
             throw new SQLException("No se encontró el driver JDBC.", e);
         }
     }
+    public static Connection conectarGYE(boolean ciudad) throws SQLException {
+      
+           String host = "Localhost"; // ← IP del servidor donde está BQuito
+           String base = "BGuayaquil1";
+       
+
+        String url = "jdbc:sqlserver://" + host + ":1433;databaseName=" + base +
+                ";encrypt=true;trustServerCertificate=true;";
+
+        try {
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            return DriverManager.getConnection(url, USER, PASSWORD);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("No se encontró el driver JDBC.", e);
+        }
+    }
+          
+    
 }

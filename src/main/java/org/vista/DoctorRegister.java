@@ -119,6 +119,21 @@ public class DoctorRegister extends JFrame {
         btnRegistrar.setFocusPainted(false);
         btnRegistrar.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(btnRegistrar, gbc);
+        
+         gbc.gridy = 6; // Posición debajo del botón de registrar
+        JButton btnRegresar = new JButton("Regresar");
+        btnRegresar.setPreferredSize(new Dimension(200, 35));
+        btnRegresar.setBackground(new Color(100, 100, 100));
+        btnRegresar.setForeground(Color.WHITE);
+        btnRegresar.setFocusPainted(false);
+        btnRegresar.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(btnRegresar, gbc);
+
+        // Acción del botón regresar
+        btnRegresar.addActionListener(e -> {
+            this.dispose(); // Cierra la ventana actual
+            new AdminWindow(sedeSelect).setVisible(true); // Abre la ventana AdminWindow
+        });
 
         // Acción del botón registrar
         
@@ -137,7 +152,12 @@ public class DoctorRegister extends JFrame {
 
     Connection conn = null;
     try {
-        conn = ConexionSQL.conectar();
+        if(ciudadCentro.equalsIgnoreCase("Quito")){
+            conn = ConexionSQL.conectar();
+        }else{
+            conn = ConexionSQL.conectarGYE(true);
+        }
+        
         conn.setAutoCommit(false); // Iniciar transacción
         
         if(ciudadCentro.equals("Quito")) {
@@ -163,6 +183,7 @@ public class DoctorRegister extends JFrame {
             
             JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Quito!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
         } else { 
+            
             // Insertar en Guayaquil
             int idCentro = obtenerIdCentroDisponible(conn, "G");
             int idMedico = obtenerNuevoIdMedico(conn, "G");
