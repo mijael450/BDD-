@@ -30,13 +30,13 @@ public class DoctorRegister extends JFrame {
         // ----------------- PANEL IZQUIERDO -----------------
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(230, 230, 230)); // Gris claro
+        leftPanel.setBackground(new Color(0, 53, 84)); // Gris claro
         leftPanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
         JLabel titulo = new JLabel("REGISTRO DE NUEVO DOCTOR");
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         titulo.setFont(new Font("Arial", Font.BOLD, 20));
-        titulo.setForeground(new Color(50, 50, 50));
+        titulo.setForeground(new Color(255, 255, 255));
         leftPanel.add(titulo);
         leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
@@ -51,7 +51,7 @@ public class DoctorRegister extends JFrame {
         // ----------------- PANEL DERECHO (REGISTRO) -----------------
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new GridBagLayout());
-        rightPanel.setBackground(new Color(245, 245, 245));
+        rightPanel.setBackground(new Color(157, 209, 241));
         rightPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -115,7 +115,7 @@ public class DoctorRegister extends JFrame {
         JButton btnRegistrar = new JButton("Registrar Doctor");
         btnRegistrar.setPreferredSize(new Dimension(200, 35));
         btnRegistrar.setBackground(new Color(70, 130, 180));
-        btnRegistrar.setForeground(Color.WHITE);
+        btnRegistrar.setForeground(Color.BLACK);
         btnRegistrar.setFocusPainted(false);
         btnRegistrar.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(btnRegistrar, gbc);
@@ -124,7 +124,7 @@ public class DoctorRegister extends JFrame {
         JButton btnRegresar = new JButton("Regresar");
         btnRegresar.setPreferredSize(new Dimension(200, 35));
         btnRegresar.setBackground(new Color(100, 100, 100));
-        btnRegresar.setForeground(Color.WHITE);
+        btnRegresar.setForeground(Color.BLACK);
         btnRegresar.setFocusPainted(false);
         btnRegresar.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(btnRegresar, gbc);

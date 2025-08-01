@@ -99,13 +99,9 @@ public class AgendamientoWindow extends JFrame {
         panelDerecho.setBackground(new Color(157, 209, 241));
 
         JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 10, 10));
-        panelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         panelFormulario.setBackground(new Color(157, 209, 241));
 
-
-//        panelFormulario.add(new JLabel("Cédula del Paciente:"));
-//        txtCedulaPaciente = new JTextField();
-//        panelFormulario.add(txtCedulaPaciente);
 
         panelFormulario.add(new JLabel("Especialidad Médica:"));
         cmbEspecialidad = new JComboBox<>();
@@ -129,14 +125,24 @@ public class AgendamientoWindow extends JFrame {
 
         jButton_AgendarCita = new JButton("Agendar Cita");
         jButton_AgendarCita.setBackground(new Color(76, 175, 80));
-        jButton_AgendarCita.setForeground(Color.WHITE);
+        jButton_AgendarCita.setForeground(Color.BLACK);
         jButton_AgendarCita.addActionListener(e -> agendarCitaEnDB());
         panelFormulario.add(jButton_AgendarCita);
 
         // Tabla de horarios
         String[] columnas = {"Hora", "Estado"};
-        modeloTabla = new DefaultTableModel(columnas, 0);
+        modeloTabla = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;  // tabla de solo lectura
+            }
+        };
+
         tablaHorarios = new JTable(modeloTabla);
+        tablaHorarios.setRowHeight(25);
+        tablaHorarios.setFont(new Font("Arial", Font.PLAIN, 13));
+        tablaHorarios.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+
         scrollTabla = new JScrollPane(tablaHorarios);
         scrollTabla.setVisible(false);
 
