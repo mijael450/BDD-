@@ -69,9 +69,10 @@ public class AdminWindow extends JFrame {
         JButton btnVerMedicos = new JButton("Ver Lista de Médicos");
         JButton btnVerPacientes = new JButton("Ver Lista de Pacientes");
         JButton btnVerEspecialidades = new JButton("Ver Especialidades");
+        JButton btnAgregarEspecialidad = new JButton("Agregar Especialidad");
         JButton btnCerrarSesion = new JButton("Cerrar Sesión");
 
-        JButton[] botones = {btnRegistrarMedico, btnVerMedicos, btnVerPacientes, btnVerEspecialidades,btnCerrarSesion};
+        JButton[] botones = {btnRegistrarMedico, btnVerMedicos, btnVerPacientes, btnVerEspecialidades,btnAgregarEspecialidad,btnCerrarSesion};
         int y = 80;
         for (JButton boton : botones) {
             boton.setBounds(100, y, 250, 40);
@@ -108,6 +109,11 @@ public class AdminWindow extends JFrame {
 
         btnVerEspecialidades.addActionListener(e -> {
             new ListaEspecialidadesWindow(this.sedeSelect).setVisible(true);
+            dispose();
+        });
+
+        btnAgregarEspecialidad.addActionListener(e -> {
+            new EspecialidadRegisterWindow(this.sedeSelect).setVisible(true);
             dispose();
         });
 
