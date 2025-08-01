@@ -299,16 +299,18 @@ public class PacienteRegister extends JFrame {
 
         // Insertar en datos de contacto
         String sqlContacto = esQuito ?
-            "INSERT INTO PACIENTE_CONTACTO_Q (CEDULA, TELEFONO, EMAIL, DIRECCION) VALUES (?, ?, ?, ?)" :
-            "INSERT INTO PACIENTE_CONTACTO_G (CEDULA, TELEFONO, EMAIL, DIRECCION) VALUES (?, ?, ?, ?)";
+            "INSERT INTO PACIENTE_CONTACTO_Q (CEDULA, TELEFONO, EMAIL, DIRECCION, CIUDAD) VALUES (?, ?, ?, ?, ?)" :
+            "INSERT INTO PACIENTE_CONTACTO_G (CEDULA, TELEFONO, EMAIL, DIRECCION, CIUDAD) VALUES (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement ps = conn.prepareStatement(sqlContacto)) {
-            ps.setString(1, cedula);
-            ps.setString(2, telefono);
-            ps.setString(3, email);
-            ps.setString(4, direccion);
-            ps.executeUpdate();
-        }
+       try (PreparedStatement ps = conn.prepareStatement(sqlContacto)) {
+    ps.setString(1, cedula);
+    ps.setString(2, telefono);
+    ps.setString(3, email);
+    ps.setString(4, direccion);
+    ps.setString(5, ciudad); // ← nuevo parámetro
+    ps.executeUpdate();
+}
+
     }
 
     private void limpiarCampos(JTextField... campos) {
