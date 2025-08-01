@@ -22,7 +22,7 @@ public class ConexionSQL {
             host = "Localhost"; // ← IP del servidor donde está BQuito
             base = "BQuito1";
         } else {
-            host = "localhost";
+            host = "26.148.216.126";
             base = "BGuayaquil1";
         }
 
