@@ -31,10 +31,12 @@ public class LoginWindow extends JFrame {
     private String sedeSelect;
     
     public LoginWindow(String sedeSelect) {
+        this.sedeSelect = sedeSelect;
         initializeWindow();
         createComponents();
         addEventListeners();
-        this.sedeSelect = sedeSelect;
+        
+        System.out.println("Sede seleccionada en login: "+this.sedeSelect+"\n");
     }
 
     private void initializeWindow() {
@@ -103,13 +105,23 @@ public class LoginWindow extends JFrame {
         txtPassword = new JPasswordField();
         txtPassword.setBounds(150, 130, 200, 30);
         rightPanel.add(txtPassword);
-
+        
+        if(this.sedeSelect.equalsIgnoreCase("Quito")){
+           // Combo box para iniciar como paciente o administrador 
+            comboRol = new JComboBox<>(new String[]{"Paciente", "Administrador"});
+            comboRol.setBounds(150, 165, 200, 25);
+            comboRol.setFont(new Font("Arial", Font.PLAIN, 14));
+            comboRol.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            rightPanel.add(comboRol);
+        }else {
+            comboRol = new JComboBox<>(new String[]{"Paciente"});
+            comboRol.setBounds(150, 165, 200, 25);
+            comboRol.setFont(new Font("Arial", Font.PLAIN, 14));
+            comboRol.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            rightPanel.add(comboRol);
+        }
         // Combo box para iniciar como paciente o administrador 
-        comboRol = new JComboBox<>(new String[]{"Paciente", "Administrador"});
-        comboRol.setBounds(150, 165, 200, 25);
-        comboRol.setFont(new Font("Arial", Font.PLAIN, 14));
-        comboRol.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        rightPanel.add(comboRol);
+        
         
         //Boton de login
         btnLogin = new JButton("Iniciar Sesión");

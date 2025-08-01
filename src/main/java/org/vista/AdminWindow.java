@@ -1,51 +1,126 @@
 package org.vista;
 
-
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 
 public class AdminWindow extends JFrame {
     private String sedeSelect;
+
     public AdminWindow(String sedeSelect) {
         this.sedeSelect = sedeSelect;
+        initializeWindow();
+        createComponents();
+    }
+
+    private void initializeWindow() {
         setTitle("Panel del Administrador");
-        setSize(600, 400);
+        setSize(900, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+    }
 
-        // Encabezado
-        JLabel titulo = new JLabel("Panel de Administración del Sistema Médico", SwingConstants.CENTER);
-        titulo.setFont(new Font("Arial", Font.BOLD, 18));
-        titulo.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(titulo, BorderLayout.NORTH);
+    private void createComponents() {
+        JPanel mainPanel = new JPanel(new GridLayout(1, 2));
+        add(mainPanel, BorderLayout.CENTER);
 
-        // Panel central con botones
-        JPanel panelBotones = new JPanel();
-        panelBotones.setLayout(new GridLayout(4, 1, 10, 10));
-        panelBotones.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
+        mainPanel.add(createLeftPanel());
+        mainPanel.add(createRightPanel());
+    }
+
+    private JPanel createLeftPanel() {
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setBackground(new Color(0, 53, 84));
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+
+        JLabel titulo = new JLabel("ADMINISTRADOR");
+        titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titulo.setFont(new Font("Arial", Font.BOLD, 24));
+        titulo.setForeground(Color.WHITE);
+        leftPanel.add(titulo);
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+
+        try {
+            JLabel image = new JLabel(escalarImagen("/pngs/hospital_icon.png", 180, 180));
+            image.setAlignmentX(Component.CENTER_ALIGNMENT);
+            leftPanel.add(image);
+        } catch (Exception e) {
+            JLabel placeholder = new JLabel("🏥");
+            placeholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+            placeholder.setFont(new Font("Arial", Font.PLAIN, 80));
+            leftPanel.add(placeholder);
+        }
+
+        return leftPanel;
+    }
+
+    private JPanel createRightPanel() {
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(null);
+        rightPanel.setBackground(new Color(225, 240, 252));
+
+        Font fontBoton = new Font("Arial", Font.BOLD, 14);
+        Color colorBoton = new Color(255, 255, 255);  // Blanco
+        Color colorTexto = Color.BLACK;               // Texto negro
 
         JButton btnRegistrarMedico = new JButton("Registrar Médico");
         JButton btnVerMedicos = new JButton("Ver Lista de Médicos");
         JButton btnVerPacientes = new JButton("Ver Lista de Pacientes");
         JButton btnCerrarSesion = new JButton("Cerrar Sesión");
 
-        panelBotones.add(btnRegistrarMedico);
-        panelBotones.add(btnVerMedicos);
-        panelBotones.add(btnVerPacientes);
-        panelBotones.add(btnCerrarSesion);
+        JButton[] botones = {btnRegistrarMedico, btnVerMedicos, btnVerPacientes, btnCerrarSesion};
+        int y = 80;
+        for (JButton boton : botones) {
+            boton.setBounds(100, y, 250, 40);
+            boton.setFont(fontBoton);
+            boton.setBackground(colorBoton);
+            boton.setForeground(colorTexto);  // Texto negro
+            boton.setFocusPainted(false);
+            boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            rightPanel.add(boton);
+            y += 60;
+        }
 
-        add(panelBotones, BorderLayout.CENTER);
-
-        // Acción de cerrar sesión
+        // Eventos
         btnCerrarSesion.addActionListener(e -> {
             new LoginWindow(this.sedeSelect).setVisible(true);
             dispose();
         });
-        
+
         btnRegistrarMedico.addActionListener(e -> {
             new DoctorRegister(this.sedeSelect).setVisible(true);
             dispose();
         });
-        
-    }}
+
+//        btnVerMedicos.addActionListener(e -> {
+//            new DoctorList(this.sedeSelect).setVisible(true);
+//            dispose();
+//        });
+
+
+
+//        btnVerPacientes.addActionListener(e -> {
+//            new PatientList(this.sedeSelect).setVisible(true);
+//            dispose();
+//        });
+
+        return rightPanel;
+    }
+
+    private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
+        try {
+            ImageIcon iconoOriginal = new ImageIcon(getClass().getResource(ruta));
+            if (iconoOriginal.getIconWidth() == -1) {
+                throw new IllegalArgumentException("Imagen no encontrada: " + ruta);
+            }
+            Image imagenOriginal = iconoOriginal.getImage();
+            Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+            return new ImageIcon(imagenEscalada);
+        } catch (Exception e) {
+            System.err.println("Error al cargar imagen: " + ruta);
+            return null;
+        }
+    }
+}

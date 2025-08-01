@@ -431,22 +431,28 @@ public class AgendamientoWindow extends JFrame {
         if (idMedico == -1) {
             throw new SQLException("No se pudo obtener el ID del médico");
         }
-
+        int idCentro;
         // 2. Obtener ID del centro (aleatorio entre 101, 102, 103)
-        int idCentro = obtenerIdCentroMedico(idMedico);//obtenerCentroAleatorio();
+        if(this.sedeSelect.equalsIgnoreCase("QUITO")){
+            idCentro = 101;//obtenerCentroAleatorio(); 
+        }else {
+            idCentro = 102;
+        }
+        
 
         // 3. Generar ID de cita
         int idCita = generarNuevoIdCita(conn);
 
         // 4. Insertar en CITA_Q
         String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sqlCita = "INSERT INTO CITA_"+tableSuffix+" (ID_CITA, FECHA, HORA, ID_MEDICO, ID_CENTRO) VALUES (?, ?, ?, ?, ?)";
+        String sqlCita = "INSERT INTO CITA_"+tableSuffix+" (ID_CITA, FECHA, HORA, ID_MEDICO, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmtCita = conn.prepareStatement(sqlCita)) {
             pstmtCita.setInt(1, idCita);
             pstmtCita.setDate(2, fecha);
             pstmtCita.setTime(3, horaTime);
             pstmtCita.setInt(4, idMedico);
             pstmtCita.setInt(5, idCentro);
+            pstmtCita.setString(6, this.sedeSelect);
             
             if (pstmtCita.executeUpdate() == 0) {
                 throw new SQLException("No se pudo insertar la cita");
@@ -454,10 +460,11 @@ public class AgendamientoWindow extends JFrame {
         }
 
         // 5. Insertar en PACIENTE_CITA_Q
-        String sqlPacienteCita = "INSERT INTO PACIENTE_CITA_"+tableSuffix+" (CEDULA, ID_CITA) VALUES (?, ?)";
+        String sqlPacienteCita = "INSERT INTO PACIENTE_CITA_"+tableSuffix+" (CEDULA, ID_CITA, CIUDAD) VALUES (?, ?, ?)";
         try (PreparedStatement pstmtPacienteCita = conn.prepareStatement(sqlPacienteCita)) {
             pstmtPacienteCita.setString(1, cedulaPaciente);
             pstmtPacienteCita.setInt(2, idCita);
+            pstmtPacienteCita.setString(3, this.sedeSelect);
             
             if (pstmtPacienteCita.executeUpdate() == 0) {
                 throw new SQLException("No se pudo registrar la relación paciente-cita");
@@ -503,21 +510,7 @@ public class AgendamientoWindow extends JFrame {
     }
 }
 
-    
-    
-
-// Método para seleccionar un centro médico aleatorio (101, 102 o 103)
-    private int obtenerCentroAleatorio() {
-        if(this.sedeSelect.equalsIgnoreCase("QUITO")) {
-        int[] centros = {101, 102, 103};
-        Random random = new Random();
-        return centros[random.nextInt(centros.length)];
-        }else{
-        int[] centros = {201, 202, 203};
-        Random random = new Random();
-        return centros[random.nextInt(centros.length)];
-        }
-    }
+   
 
     // Método para generar un nuevo ID de cita
     private int generarNuevoIdCita(Connection conn) throws SQLException {

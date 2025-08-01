@@ -128,70 +128,98 @@ public class DoctorRegister extends JFrame {
     String telefono = txtTelefono.getText().trim();
     int idEspecialidad = ObtenerID_Especialidad((String) cbEspecialidad.getSelectedItem());
     String ciudadCentro = (String) cbCentro.getSelectedItem();
+    System.out.println("Ciudad elegida para registrar al medico: " + ciudadCentro);
     
     if (nombres.isEmpty() || apellidos.isEmpty() || telefono.isEmpty()) {
         JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
         return;
     }
 
-    try (Connection conn = ConexionSQL.conectar()) {
-        // Primero determinamos si es Quito o Guayaquil
+    Connection conn = null;
+    try {
+        conn = ConexionSQL.conectar();
+        conn.setAutoCommit(false); // Iniciar transacción
+        
         if(ciudadCentro.equals("Quito")) {
-            // Insertar en CENTRO_Q (asumiendo que ya existe el centro)
-            // Obtener ID_CENTRO disponible para Quito
+            // Insertar en Quito
             int idCentro = obtenerIdCentroDisponible(conn, "Q");
-            
-            // Insertar en MEDICO_Q (tabla completa)
-            String sqlMedico = "INSERT INTO MEDICO_Q (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO) VALUES (?, ?, ?, ?, ?)";
             int idMedico = obtenerNuevoIdMedico(conn, "Q");
+            String nombreCompleto = nombres + " " + apellidos;
             
+            // Insertar en tabla principal MEDICO_Q
+            String sqlMedico = "INSERT INTO MEDICO_Q (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlMedico)) {
                 ps.setInt(1, idMedico);
-                ps.setString(2, nombres + " " + apellidos);
+                ps.setString(2, nombreCompleto);
                 ps.setString(3, telefono);
                 ps.setInt(4, idEspecialidad);
                 ps.setInt(5, idCentro);
-                
-                int filas = ps.executeUpdate();
-                
-                if(filas > 0) {
-                    // Insertar en las tablas fragmentadas verticalmente
-                    insertarMedicoVerticalQ(conn, idMedico, nombres + " " + apellidos, telefono, idCentro, idEspecialidad);
-                    JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Quito!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
-                }
+                ps.setString(6, ciudadCentro);
+                ps.executeUpdate();
             }
-        } else { // Guayaquil
-            // Insertar en CENTRO_G (asumiendo que ya existe el centro)
-            // Obtener ID_CENTRO disponible para Guayaquil
+            
+            // Insertar en fragmentos verticales
+            insertarMedicoVerticalQ(conn, idMedico, nombreCompleto, telefono, idCentro, idEspecialidad, ciudadCentro);
+            
+            JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Quito!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
+        } else { 
+            // Insertar en Guayaquil
             int idCentro = obtenerIdCentroDisponible(conn, "G");
-            
-            // Insertar en MEDICO_G (tabla completa)
-            String sqlMedico = "INSERT INTO MEDICO_G (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO) VALUES (?, ?, ?, ?, ?)";
             int idMedico = obtenerNuevoIdMedico(conn, "G");
+            String nombreCompleto = nombres + " " + apellidos;
             
+            // Insertar en tabla principal MEDICO_G
+            String sqlMedico = "INSERT INTO MEDICO_G (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlMedico)) {
                 ps.setInt(1, idMedico);
-                ps.setString(2, nombres + " " + apellidos);
+                ps.setString(2, nombreCompleto);
                 ps.setString(3, telefono);
                 ps.setInt(4, idEspecialidad);
                 ps.setInt(5, idCentro);
-                
-                int filas = ps.executeUpdate();
-                
-                if(filas > 0) {
-                    // Insertar en las tablas fragmentadas verticalmente
-                    insertarMedicoVerticalG(conn, idMedico, nombres + " " + apellidos, telefono, idCentro, idEspecialidad);
-                    JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Guayaquil!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
-                }
+                ps.setString(6, ciudadCentro);
+                ps.executeUpdate();
             }
+            
+            // Insertar en fragmentos verticales
+            insertarMedicoVerticalG(conn, idMedico, nombreCompleto, telefono, idCentro, idEspecialidad, ciudadCentro);
+            
+            JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Guayaquil!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
         }
         
-        limpiarCampos(txtNombres, txtApellidos, txtTelefono);
-    } catch (SQLException ex) {
-        ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error al registrar el doctor: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }
-    });
+            conn.commit(); // Confirmar transacción
+            limpiarCampos(txtNombres, txtApellidos, txtTelefono);
+        } catch (SQLException ex) {
+            try {
+                if (conn != null) {
+                    conn.rollback(); // Revertir en caso de error
+                }
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+
+            String errorMsg = "Error al registrar el doctor: ";
+            if (ex.getMessage().contains("CIUDAD")) {
+                errorMsg += "Falta especificar la ciudad o es inválida";
+            } else {
+                errorMsg += ex.getMessage();
+            }
+
+            JOptionPane.showMessageDialog(this, errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true); // Restaurar autocommit
+                    conn.close();
+                }
+            } catch (SQLException closeEx) {
+                closeEx.printStackTrace();
+            }
+        }
+        });
+
+        
+        
 
         mainPanel.add(rightPanel);
     }
@@ -213,44 +241,51 @@ private int obtenerIdCentroDisponible(Connection conn, String ciudad) throws SQL
     }
 }
 
-private void insertarMedicoVerticalQ(Connection conn, int idMedico, String nombre, String telefono, int idCentro, int idEspecialidad) throws SQLException {
-    // Insertar en identificación
-    String sqlIdent = "INSERT INTO MEDICO_IDENTIFICACION_Q (ID_MEDICO, NOMBRE, TELEFONO, ID_CENTRO) VALUES (?, ?, ?, ?)";
-    try (PreparedStatement ps = conn.prepareStatement(sqlIdent)) {
-        ps.setInt(1, idMedico);
-        ps.setString(2, nombre);
-        ps.setString(3, telefono);
-        ps.setInt(4, idCentro);
-        ps.executeUpdate();
-    }
-    
-    // Insertar en perfil profesional
-    String sqlPerfil = "INSERT INTO MEDICO_PERFIL_PROFESIONAL_Q (ID_MEDICO, ID_ESPECIALIDAD) VALUES (?, ?)";
-    try (PreparedStatement ps = conn.prepareStatement(sqlPerfil)) {
-        ps.setInt(1, idMedico);
-        ps.setInt(2, idEspecialidad);
-        ps.executeUpdate();
-    }
-}
+// Método modificado para insertar en fragmentos verticales de Quito
+    private void insertarMedicoVerticalQ(Connection conn, int idMedico, String nombre, String telefono, int idCentro, int idEspecialidad, String ciudad) throws SQLException {
+        // Insertar en identificación
+        String sqlIdent = "INSERT INTO MEDICO_IDENTIFICACION_Q (ID_MEDICO, NOMBRE, TELEFONO, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sqlIdent)) {
+            ps.setInt(1, idMedico);
+            ps.setString(2, nombre);
+            ps.setString(3, telefono);
+            ps.setInt(4, idCentro);
+            ps.setString(5, ciudad);
+            ps.executeUpdate();
+        }
 
-private void insertarMedicoVerticalG(Connection conn, int idMedico, String nombre, String telefono, int idCentro, int idEspecialidad) throws SQLException {
-    // Similar al método anterior pero para Guayaquil
-    String sqlIdent = "INSERT INTO MEDICO_IDENTIFICACION_G (ID_MEDICO, NOMBRE, TELEFONO, ID_CENTRO) VALUES (?, ?, ?, ?)";
-    try (PreparedStatement ps = conn.prepareStatement(sqlIdent)) {
-        ps.setInt(1, idMedico);
-        ps.setString(2, nombre);
-        ps.setString(3, telefono);
-        ps.setInt(4, idCentro);
-        ps.executeUpdate();
+        // Insertar en perfil profesional
+        String sqlPerfil = "INSERT INTO MEDICO_PERFIL_PROFESIONAL_Q (ID_MEDICO, ID_ESPECIALIDAD, CIUDAD) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sqlPerfil)) {
+            ps.setInt(1, idMedico);
+            ps.setInt(2, idEspecialidad);
+            ps.setString(3, ciudad);
+            ps.executeUpdate();
+        }
     }
-    
-    String sqlPerfil = "INSERT INTO MEDICO_PERFIL_PROFESIONAL_G (ID_MEDICO, ID_ESPECIALIDAD) VALUES (?, ?)";
-    try (PreparedStatement ps = conn.prepareStatement(sqlPerfil)) {
-        ps.setInt(1, idMedico);
-        ps.setInt(2, idEspecialidad);
-        ps.executeUpdate();
+
+// Método para insertar en fragmentos verticales de Guayaquil (similar al de Quito)
+    private void insertarMedicoVerticalG(Connection conn, int idMedico, String nombre, String telefono, int idCentro, int idEspecialidad, String ciudad) throws SQLException {
+        // Insertar en identificación
+        String sqlIdent = "INSERT INTO MEDICO_IDENTIFICACION_G (ID_MEDICO, NOMBRE, TELEFONO, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sqlIdent)) {
+            ps.setInt(1, idMedico);
+            ps.setString(2, nombre);
+            ps.setString(3, telefono);
+            ps.setInt(4, idCentro);
+            ps.setString(5, ciudad);
+            ps.executeUpdate();
+        }
+
+        // Insertar en perfil profesional
+        String sqlPerfil = "INSERT INTO MEDICO_PERFIL_PROFESIONAL_G (ID_MEDICO, ID_ESPECIALIDAD, CIUDAD) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sqlPerfil)) {
+            ps.setInt(1, idMedico);
+            ps.setInt(2, idEspecialidad);
+            ps.setString(3, ciudad);
+            ps.executeUpdate();
+        }
     }
-}
 
     private void cargarEspecialidades() {
         // Aquí cargarías las especialidades desde la base de datos

@@ -19,7 +19,7 @@ public class ConexionSQL {
         String base;
 
         if (sede.equalsIgnoreCase("Quito")) {
-            host = "26.12.213.160"; // ← IP del servidor donde está BQuito
+            host = "Localhost"; // ← IP del servidor donde está BQuito
             base = "BQuito1";
         } else {
             host = "localhost";

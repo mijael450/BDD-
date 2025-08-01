@@ -3,6 +3,7 @@ package org.vista;
 import org.config.Config;
 import javax.swing.*;
 import java.awt.*;
+import static java.time.Clock.system;
 
 public class SeleccionSede extends JFrame {
     private String sedeSelect;
@@ -95,6 +96,7 @@ public class SeleccionSede extends JFrame {
             
             Config.sedeSeleccionada = comboSede.getSelectedItem().toString();
             this.sedeSelect=comboSede.getSelectedItem().toString();
+            System.out.println("Sede seleccionada: "+this.sedeSelect);
             // Confirmar la sede seleccionada con el usuario
             int confSedeSelecc = JOptionPane.showConfirmDialog(
                     this,
