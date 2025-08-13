@@ -2,6 +2,10 @@ package org.vista;
 import org.config.ConexionSQL;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +22,7 @@ public class DoctorRegister extends JFrame {
     public DoctorRegister(String sedeSelect) {
         this.sedeSelect = sedeSelect;
         setTitle("Registro de Nuevo Doctor");
-        setSize(900, 500);
+        setSize(950, 500);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -63,53 +67,88 @@ public class DoctorRegister extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel lblNombres = new JLabel("Nombres:");
+        lblNombres.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(lblNombres, gbc);
 
         gbc.gridx = 1;
         JTextField txtNombres = new JTextField(20);
+        txtNombres.setFont(new Font("Arial", Font.PLAIN, 14));
         rightPanel.add(txtNombres, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         JLabel lblApellidos = new JLabel("Apellidos:");
+        lblApellidos.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(lblApellidos, gbc);
 
         gbc.gridx = 1;
         JTextField txtApellidos = new JTextField(20);
+        txtApellidos.setFont(new Font("Arial", Font.PLAIN, 14));
         rightPanel.add(txtApellidos, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        JLabel lblTelefono = new JLabel("Teléfono:");
-        rightPanel.add(lblTelefono, gbc);
-
-        gbc.gridx = 1;
-        JTextField txtTelefono = new JTextField(20);
-        rightPanel.add(txtTelefono, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 3;
         JLabel lblEspecialidad = new JLabel("Especialidad:");
+        lblEspecialidad.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(lblEspecialidad, gbc);
 
         gbc.gridx = 1;
         cbEspecialidad = new JComboBox<>();
         cargarEspecialidades();
+        cbEspecialidad.setFont(new Font("Arial", Font.PLAIN, 14));
         rightPanel.add(cbEspecialidad, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 3;
         JLabel lblCentro = new JLabel("Centro Médico:");
+        lblCentro.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(lblCentro, gbc);
 
         gbc.gridx = 1;
         cbCentro = new JComboBox<>();
         cargarCentros();
+        cbCentro.setFont(new Font("Arial", Font.PLAIN, 14));
         rightPanel.add(cbCentro, gbc);
 
-        // Botón de registro
+
         gbc.gridx = 0;
+        gbc.gridy = 4;
+        JLabel lblTelefono = new JLabel("Teléfono:");
+        lblTelefono.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(lblTelefono, gbc);
+
+
+        gbc.gridx = 1;
+        JTextField txtTelefono = new JTextField(20);
+        txtTelefono.setFont(new Font("Arial", Font.PLAIN, 14));
+        rightPanel.add(txtTelefono, gbc);
+
         gbc.gridy = 5;
+        gbc.gridx = 0;
+        JLabel lblCorreo = new JLabel("Correo Electrónico:");
+        lblCorreo.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(lblCorreo, gbc);
+
+        gbc.gridx = 1;
+        JTextField txtCorreo = new JTextField(20);
+        txtCorreo.setFont(new Font("Arial", Font.PLAIN, 14));
+        rightPanel.add(txtCorreo, gbc);
+
+        gbc.gridy = 6;
+        gbc.gridx = 0;
+        JLabel lblSueldo = new JLabel("Sueldo:");
+        lblSueldo.setFont(new Font("Arial", Font.BOLD, 14));
+        rightPanel.add(lblSueldo, gbc);
+
+        gbc.gridx = 1;
+        JTextField txtSueldo = new JTextField(20);
+        txtSueldo.setFont(new Font("Arial", Font.PLAIN, 14));
+        rightPanel.add(txtSueldo, gbc);
+
+
+        // Botón de registro
+        gbc.gridx = 1;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.CENTER;
         JButton btnRegistrar = new JButton("Registrar Doctor");
@@ -119,131 +158,140 @@ public class DoctorRegister extends JFrame {
         btnRegistrar.setFocusPainted(false);
         btnRegistrar.setFont(new Font("Arial", Font.BOLD, 14));
         rightPanel.add(btnRegistrar, gbc);
-        
-         gbc.gridy = 6; // Posición debajo del botón de registrar
-        JButton btnRegresar = new JButton("Regresar");
-        btnRegresar.setPreferredSize(new Dimension(200, 35));
-        btnRegresar.setBackground(new Color(100, 100, 100));
-        btnRegresar.setForeground(Color.BLACK);
-        btnRegresar.setFocusPainted(false);
-        btnRegresar.setFont(new Font("Arial", Font.BOLD, 14));
-        rightPanel.add(btnRegresar, gbc);
 
-        // Acción del botón regresar
-        btnRegresar.addActionListener(e -> {
-            this.dispose(); // Cierra la ventana actual
-            new AdminWindow(sedeSelect).setVisible(true); // Abre la ventana AdminWindow
+
+        JLabel lblRegresar = new JLabel("<html><u>Regresar</u></html>");
+        lblRegresar.setForeground(Color.BLUE);
+        lblRegresar.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblRegresar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Configurar GridBagConstraints para esquina inferior derecha
+        gbc.gridx = 1; // Columna derecha
+        gbc.gridy = 8; // Fila después del botón
+        gbc.gridwidth = 1; // Solo una columna
+        gbc.anchor = GridBagConstraints.SOUTHEAST; // Esquina inferior derecha
+        gbc.fill = GridBagConstraints.NONE; // No expandir
+        gbc.weightx = 1.0; // Empujar hacia la derecha
+        gbc.weighty = 3.5; // Empujar hacia abajo
+        gbc.insets = new Insets(20, 10, 0, 5); // Margen desde los bordes
+
+        rightPanel.add(lblRegresar, gbc);
+
+        lblRegresar.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                dispose();
+                new AdminWindow(sedeSelect).setVisible(true);
+            }
         });
+
 
         // Acción del botón registrar
-        
         btnRegistrar.addActionListener(e -> {
-    String nombres = txtNombres.getText().trim();
-    String apellidos = txtApellidos.getText().trim();
-    String telefono = txtTelefono.getText().trim();
-    int idEspecialidad = ObtenerID_Especialidad((String) cbEspecialidad.getSelectedItem());
-    String ciudadCentro = (String) cbCentro.getSelectedItem();
-    System.out.println("Ciudad elegida para registrar al medico: " + ciudadCentro);
-    
-    if (nombres.isEmpty() || apellidos.isEmpty() || telefono.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
+        String nombres = txtNombres.getText().trim();
+        String apellidos = txtApellidos.getText().trim();
+        String telefono = txtTelefono.getText().trim();
+        int idEspecialidad = ObtenerID_Especialidad((String) cbEspecialidad.getSelectedItem());
+        String ciudadCentro = (String) cbCentro.getSelectedItem();
+        System.out.println("Ciudad elegida para registrar al medico: " + ciudadCentro);
 
-    Connection conn = null;
-    try {
-        if(ciudadCentro.equalsIgnoreCase("Quito")){
-            conn = ConexionSQL.conectar();
-        }else{
-            conn = ConexionSQL.conectarGYE(true);
+        if (nombres.isEmpty() || apellidos.isEmpty() || telefono.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-        
-        conn.setAutoCommit(false); // Iniciar transacción
-        
-        if(ciudadCentro.equals("Quito")) {
-            // Insertar en Quito
-            int idCentro = obtenerIdCentroDisponible(conn, "Q");
-            int idMedico = obtenerNuevoIdMedico(conn, "Q");
-            String nombreCompleto = nombres + " " + apellidos;
-            
-            // Insertar en tabla principal MEDICO_Q
-            String sqlMedico = "INSERT INTO MEDICO_Q (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlMedico)) {
-                ps.setInt(1, idMedico);
-                ps.setString(2, nombreCompleto);
-                ps.setString(3, telefono);
-                ps.setInt(4, idEspecialidad);
-                ps.setInt(5, idCentro);
-                ps.setString(6, ciudadCentro);
-                ps.executeUpdate();
+
+        Connection conn = null;
+        try {
+            if(ciudadCentro.equalsIgnoreCase("Quito")){
+                conn = ConexionSQL.conectar();
+            }else{
+                conn = ConexionSQL.conectarGYE(true);
             }
-            
-            // Insertar en fragmentos verticales
-            insertarMedicoVerticalQ(conn, idMedico, nombreCompleto, telefono, idCentro, idEspecialidad, ciudadCentro);
-            
-            JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Quito!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
-        } else { 
-            
-            // Insertar en Guayaquil
-            int idCentro = obtenerIdCentroDisponible(conn, "G");
-            int idMedico = obtenerNuevoIdMedico(conn, "G");
-            String nombreCompleto = nombres + " " + apellidos;
-            
-            // Insertar en tabla principal MEDICO_G
-            String sqlMedico = "INSERT INTO MEDICO_G (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlMedico)) {
-                ps.setInt(1, idMedico);
-                ps.setString(2, nombreCompleto);
-                ps.setString(3, telefono);
-                ps.setInt(4, idEspecialidad);
-                ps.setInt(5, idCentro);
-                ps.setString(6, ciudadCentro);
-                ps.executeUpdate();
-            }
-            
-            // Insertar en fragmentos verticales
-            insertarMedicoVerticalG(conn, idMedico, nombreCompleto, telefono, idCentro, idEspecialidad, ciudadCentro);
-            
-            JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Guayaquil!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
-        }
-        
-            conn.commit(); // Confirmar transacción
-            limpiarCampos(txtNombres, txtApellidos, txtTelefono);
-        } catch (SQLException ex) {
-            try {
-                if (conn != null) {
-                    conn.rollback(); // Revertir en caso de error
+
+            conn.setAutoCommit(false); // Iniciar transacción
+
+            if(ciudadCentro.equals("Quito")) {
+                // Insertar en Quito
+                int idCentro = obtenerIdCentroDisponible(conn, "Q");
+                int idMedico = obtenerNuevoIdMedico(conn, "Q");
+                String nombreCompleto = nombres + " " + apellidos;
+
+                // Insertar en tabla principal MEDICO_Q
+                String sqlMedico = "INSERT INTO MEDICO_Q (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlMedico)) {
+                    ps.setInt(1, idMedico);
+                    ps.setString(2, nombreCompleto);
+                    ps.setString(3, telefono);
+                    ps.setInt(4, idEspecialidad);
+                    ps.setInt(5, idCentro);
+                    ps.setString(6, ciudadCentro);
+                    ps.executeUpdate();
                 }
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
 
-            String errorMsg = "Error al registrar el doctor: ";
-            if (ex.getMessage().contains("CIUDAD")) {
-                errorMsg += "Falta especificar la ciudad o es inválida";
+                // Insertar en fragmentos verticales
+                insertarMedicoVerticalQ(conn, idMedico, nombreCompleto, telefono, idCentro, idEspecialidad, ciudadCentro);
+
+                JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Quito!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                errorMsg += ex.getMessage();
-            }
 
-            JOptionPane.showMessageDialog(this, errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
-        } finally {
-            try {
-                if (conn != null) {
-                    conn.setAutoCommit(true); // Restaurar autocommit
-                    conn.close();
+                // Insertar en Guayaquil
+                int idCentro = obtenerIdCentroDisponible(conn, "G");
+                int idMedico = obtenerNuevoIdMedico(conn, "G");
+                String nombreCompleto = nombres + " " + apellidos;
+
+                // Insertar en tabla principal MEDICO_G
+                String sqlMedico = "INSERT INTO MEDICO_G (ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlMedico)) {
+                    ps.setInt(1, idMedico);
+                    ps.setString(2, nombreCompleto);
+                    ps.setString(3, telefono);
+                    ps.setInt(4, idEspecialidad);
+                    ps.setInt(5, idCentro);
+                    ps.setString(6, ciudadCentro);
+                    ps.executeUpdate();
                 }
-            } catch (SQLException closeEx) {
-                closeEx.printStackTrace();
-            }
-        }
-        });
 
-        
-        
+                // Insertar en fragmentos verticales
+                insertarMedicoVerticalG(conn, idMedico, nombreCompleto, telefono, idCentro, idEspecialidad, ciudadCentro);
+
+                JOptionPane.showMessageDialog(this, "Doctor registrado exitosamente en Guayaquil!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+                conn.commit(); // Confirmar transacción
+                limpiarCampos(txtNombres, txtApellidos, txtTelefono);
+            } catch (SQLException ex) {
+                try {
+                    if (conn != null) {
+                        conn.rollback(); // Revertir en caso de error
+                    }
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+
+                String errorMsg = "Error al registrar el doctor: ";
+                if (ex.getMessage().contains("CIUDAD")) {
+                    errorMsg += "Falta especificar la ciudad o es inválida";
+                } else {
+                    errorMsg += ex.getMessage();
+                }
+
+                JOptionPane.showMessageDialog(this, errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            } finally {
+                try {
+                    if (conn != null) {
+                        conn.setAutoCommit(true); // Restaurar autocommit
+                        conn.close();
+                    }
+                } catch (SQLException closeEx) {
+                    closeEx.printStackTrace();
+                }
+            }
+        });
 
         mainPanel.add(rightPanel);
     }
+
+
     private int obtenerNuevoIdMedico(Connection conn, String ciudad) throws SQLException {
     String sql = "SELECT MAX(ID_MEDICO) FROM MEDICO_" + ciudad;
     try (PreparedStatement ps = conn.prepareStatement(sql);
