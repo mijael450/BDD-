@@ -39,7 +39,7 @@ public class ListaEspecialidadesWindow extends JFrame {
         add(panelSuperior, BorderLayout.NORTH);
 
         // ---------- TABLA ----------
-        String[] columnas = {"ID Especialidad", "Nombre","Descripcion"};
+        String[] columnas = {"ID Especialidad", "Nombre","Descripcion", "Centro Médico"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -84,7 +84,7 @@ public class ListaEspecialidadesWindow extends JFrame {
         modeloTabla.setRowCount(0);
 
 
-        String sql = "SELECT * FROM ESPECIALIDAD" ;
+        String sql = "SELECT * FROM ESPECIALIDAD_GLOBAL" ;
 
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -94,14 +94,15 @@ public class ListaEspecialidadesWindow extends JFrame {
                 Object[] fila = {
                         rs.getInt("ID_ESPECIALIDAD"),
                         rs.getString("NOMBRE"),
-                        rs.getString("DESCRIPCION")
+                        rs.getString("DESCRIPCION"),
+                        rs.getString("ORIGEN")
                 };
                 modeloTabla.addRow(fila);
             }
 
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Error al buscar médicos: " + ex.getMessage(),
+                    "Error al buscar especialidades: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
