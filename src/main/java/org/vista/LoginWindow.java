@@ -230,11 +230,9 @@ public class LoginWindow extends JFrame {
                     }
                     
                     
-                    
                     //  login como PACIENTE
-                    
                     if(comboRol.getSelectedItem().toString().equalsIgnoreCase("Paciente")){
-                    String sql = "SELECT NOMBRE FROM PACIENTE_"+ tableSuffix +" WHERE NOMBRE = ? AND CEDULA = ?";
+                    String sql = "SELECT NOMBRE FROM PACIENTE WHERE NOMBRE = ? AND CEDULA = ?";
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setString(1, nombre);
                         ps.setString(2, cedula);

@@ -99,15 +99,22 @@ public class VistaCitasPaciente extends JFrame {
         String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
         modeloTabla.setRowCount(0);
 
-        String sql = "SELECT c.ID_CITA, c.FECHA, c.HORA, m.NOMBRE AS MEDICO, " +
-                     "e.NOMBRE AS ESPECIALIDAD, cen.NOMBRE AS CENTRO " +
-                     "FROM CITA_"+tableSuffix+" c " +
-                     "JOIN PACIENTE_CITA_"+tableSuffix+" pc ON c.ID_CITA = pc.ID_CITA " +
-                     "JOIN MEDICO_"+tableSuffix+" m ON c.ID_MEDICO = m.ID_MEDICO " +
-                     "JOIN ESPECIALIDAD e ON m.ID_ESPECIALIDAD = e.ID_ESPECIALIDAD " +
-                     "JOIN CENTRO_"+tableSuffix+" cen ON c.ID_CENTRO = cen.ID_CENTRO " +
-                     "WHERE pc.CEDULA = ? " +
-                     "ORDER BY c.FECHA DESC, c.HORA DESC";
+        String sql = "SELECT " +
+                "c.ID_CITA, c.FECHA, c.HORA, m.NOMBRE AS MEDICO, " +
+                "CASE " +
+                "   WHEN c.ID_CENTRO = 'Q' THEN eq.NOMBRE " +
+                "   WHEN c.ID_CENTRO = 'G' THEN eg.NOMBRE " +
+                "END AS ESPECIALIDAD, " +
+                "c.ID_CENTRO AS CENTRO " +
+                "FROM CITA_GLOBAL c " +
+                "JOIN MEDICO_IDENTIFICACION m ON c.ID_MEDICO = m.ID_MEDICO " +
+                "LEFT JOIN [BQuito2].[dbo].[MEDICO_PERFIL_PROFESIONAL_Q] pq ON c.ID_MEDICO = pq.ID_MEDICO AND c.ID_CENTRO = 'Q' " +
+                "LEFT JOIN [BQuito2].[dbo].[ESPECIALIDAD_Q] eq ON pq.ID_ESPECIALIDAD = eq.ID_ESPECIALIDAD " +
+                "LEFT JOIN [LAPTOP-J4CMJHBK].[BGuayaquil].[dbo].[MEDICO_PERFIL_PROFESIONAL_G] pg ON c.ID_MEDICO = pg.ID_MEDICO AND c.ID_CENTRO = 'G' " +
+                "LEFT JOIN [LAPTOP-J4CMJHBK].[BGuayaquil].[dbo].[ESPECIALIDAD_G] eg ON pg.ID_ESPECIALIDAD = eg.ID_ESPECIALIDAD " +
+                "WHERE c.CEDULA = ? " +
+                "ORDER BY c.FECHA DESC, c.HORA DESC";
+
 
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

@@ -180,7 +180,8 @@ public class AgendamientoWindow extends JFrame {
     }
 
     private void cargarEspecialidadesDesdeDB() {
-        String sql = "SELECT nombre FROM ESPECIALIDAD ORDER BY nombre";
+        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+        String sql = String.format("SELECT nombre FROM ESPECIALIDAD_%s ORDER BY nombre", tableSuffix);
 
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -216,11 +217,15 @@ public class AgendamientoWindow extends JFrame {
 
     private void cargarMedicosDesdeDB(String especialidad) {
         String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT DISTINCT m.ID_MEDICO, m.NOMBRE, m.TELEFONO " +
-                "FROM MEDICO_"+tableSuffix+" m " +
-                "INNER JOIN ESPECIALIDAD e ON m.ID_ESPECIALIDAD = e.ID_ESPECIALIDAD " +
-                "WHERE e.nombre = ? " +
-                "ORDER BY m.NOMBRE";
+
+        String sql = "SELECT DISTINCT mi.ID_MEDICO, mi.NOMBRE, mi.TELEFONO " +
+                "FROM MEDICO_IDENTIFICACION mi " +
+                "INNER JOIN MEDICO_PERFIL_PROFESIONAL_" + tableSuffix + " mp " +
+                "    ON mi.ID_MEDICO = mp.ID_MEDICO " +
+                "INNER JOIN ESPECIALIDAD_" + tableSuffix + " e " +
+                "    ON mp.ID_ESPECIALIDAD = e.ID_ESPECIALIDAD " +
+                "WHERE e.NOMBRE = ? " +
+                "ORDER BY mi.NOMBRE";
 
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -324,199 +329,162 @@ public class AgendamientoWindow extends JFrame {
     }
 
     private String formatearHoraAMPM(Time horaTime) {
-    SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.US);
-    return sdf.format(horaTime);
-}
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.US);
+        return sdf.format(horaTime);
+    }
     
     // Método para obtener ID del médico (reutilizado del código anterior)
     private int obtenerIdMedico(Connection conn, String nombreMedico) throws SQLException {
         String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT ID_MEDICO FROM MEDICO_"+tableSuffix+" WHERE NOMBRE = ?";
+
+        String sql = "SELECT mi.ID_MEDICO " +
+                "FROM MEDICO_IDENTIFICACION mi " +
+                "INNER JOIN MEDICO_PERFIL_PROFESIONAL_" + tableSuffix + " mp " +
+                "    ON mi.ID_MEDICO = mp.ID_MEDICO " +
+                "WHERE mi.NOMBRE = ?";
+
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, nombreMedico);
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt("ID_MEDICO");
                 }
             }
         }
-        return -1;
-    }
-    
-    
-   private void agendarCitaEnDB() {
-    // Validar selección de horario
-    int selectedRow = tablaHorarios.getSelectedRow();
-    if (selectedRow == -1) {
-        JOptionPane.showMessageDialog(this, 
-            "Por favor seleccione un horario.", 
-            "Error", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
+        return -1; // Si no se encuentra
     }
 
-    // Validar que el horario esté libre
-    String estado = (String) modeloTabla.getValueAt(selectedRow, 1);
-    if (!"Libre".equals(estado)) {
-        JOptionPane.showMessageDialog(this, 
-            "El horario seleccionado no está disponible.", 
-            "Error", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
-    }
 
-    // Validar cédula del paciente
-    String cedulaPaciente = this.cedulaPaciente.trim();
-    if (cedulaPaciente.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "Por favor ingrese la cédula del paciente.", 
-            "Error", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    // Validar que el paciente exista
-    try {
-        if (!validarPaciente(cedulaPaciente)) {
-            JOptionPane.showMessageDialog(this, 
-                "La cédula ingresada no corresponde a un paciente registrado.", 
-                "Error", 
-                JOptionPane.WARNING_MESSAGE);
+    private void agendarCitaEnDB() {
+        int selectedRow = tablaHorarios.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor seleccione un horario.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al validar paciente: " + ex.getMessage(), 
-            "Error de Base de Datos", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
 
-    // Validar médico seleccionado
-    String nombreMedico = (String) cmbMedico.getSelectedItem();
-    if (nombreMedico == null || nombreMedico.equals("Seleccione un médico...")) {
-        JOptionPane.showMessageDialog(this, 
-            "Por favor seleccione un médico.", 
-            "Error", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    // Validar fecha seleccionada
-    if (dateChooser.getDate() == null) {
-        JOptionPane.showMessageDialog(this, 
-            "Por favor seleccione una fecha.", 
-            "Error", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    // Obtener y convertir hora seleccionada
-    String horaStr = (String) modeloTabla.getValueAt(selectedRow, 0);
-    Time horaTime = convertirHoraStringATime(horaStr);
-    if (horaTime == null) {
-        JOptionPane.showMessageDialog(this, 
-            "Formato de hora inválido: " + horaStr,
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    java.util.Date fechaUtil = dateChooser.getDate();
-    java.sql.Date fecha = new java.sql.Date(fechaUtil.getTime());
-    
-    Connection conn = null;
-    try {
-        conn = ConexionSQL.conectar();
-        //System.out.println("Base de datos conectada: " + conn.getCatalog());
-
-        conn.setAutoCommit(false); // Iniciar transacción
-
-        // 1. Obtener ID del médico
-        int idMedico = obtenerIdMedico(conn, nombreMedico);
-        if (idMedico == -1) {
-            throw new SQLException("No se pudo obtener el ID del médico");
-        }
-        int idCentro;
-        // 2. Obtener ID del centro (aleatorio entre 101, 102, 103)
-        if(this.sedeSelect.equalsIgnoreCase("QUITO")){
-            idCentro = 101;//obtenerCentroAleatorio(); 
-        }else {
-            idCentro = 102;
-        }
-        
-
-        // 3. Generar ID de cita
-        int idCita = generarNuevoIdCita(conn);
-
-        // 4. Insertar en CITA_Q
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sqlCita = "INSERT INTO CITA_"+tableSuffix+" (ID_CITA, FECHA, HORA, ID_MEDICO, ID_CENTRO, CIUDAD) VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmtCita = conn.prepareStatement(sqlCita)) {
-            pstmtCita.setInt(1, idCita);
-            pstmtCita.setDate(2, fecha);
-            pstmtCita.setTime(3, horaTime);
-            pstmtCita.setInt(4, idMedico);
-            pstmtCita.setInt(5, idCentro);
-            pstmtCita.setString(6, this.sedeSelect);
-            
-            if (pstmtCita.executeUpdate() == 0) {
-                throw new SQLException("No se pudo insertar la cita");
-            }
+        String estado = (String) modeloTabla.getValueAt(selectedRow, 1);
+        if (!"Libre".equals(estado)) {
+            JOptionPane.showMessageDialog(this, "El horario seleccionado no está disponible.", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
-        // 5. Insertar en PACIENTE_CITA_Q
-        String sqlPacienteCita = "INSERT INTO PACIENTE_CITA_"+tableSuffix+" (CEDULA, ID_CITA, CIUDAD) VALUES (?, ?, ?)";
-        try (PreparedStatement pstmtPacienteCita = conn.prepareStatement(sqlPacienteCita)) {
-            pstmtPacienteCita.setString(1, cedulaPaciente);
-            pstmtPacienteCita.setInt(2, idCita);
-            pstmtPacienteCita.setString(3, this.sedeSelect);
-            
-            if (pstmtPacienteCita.executeUpdate() == 0) {
-                throw new SQLException("No se pudo registrar la relación paciente-cita");
-            }
+        String cedulaPaciente = this.cedulaPaciente.trim();
+        if (cedulaPaciente.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor ingrese la cédula del paciente.", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
-        conn.commit(); // Confirmar transacción
-        
-        JOptionPane.showMessageDialog(this, 
-            "Cita agendada exitosamente:\n" +
-            "Paciente: " + cedulaPaciente + "\n" +
-            "Fecha: " + fecha + "\n" +
-            "Hora: " + horaStr + "\n" +
-            "Médico: " + nombreMedico + "\n" +
-            "Centro: " + idCentro,
-            "Éxito", 
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        modeloTabla.setValueAt("Ocupado", selectedRow, 1);
-    } catch (SQLException ex) {
         try {
-            if (conn != null) {
-                conn.rollback(); // Revertir en caso de error
+            if (!validarPaciente(cedulaPaciente)) {
+                JOptionPane.showMessageDialog(this, "La cédula ingresada no corresponde a un paciente registrado.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al validar paciente: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        
-        JOptionPane.showMessageDialog(this, 
-            "Error al agendar cita: " + ex.getMessage(),
-            "Error de Base de Datos", 
-            JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-    } finally {
+
+        String nombreMedico = (String) cmbMedico.getSelectedItem();
+        if (nombreMedico == null || nombreMedico.equals("Seleccione un médico...")) {
+            JOptionPane.showMessageDialog(this, "Por favor seleccione un médico.", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (dateChooser.getDate() == null) {
+            JOptionPane.showMessageDialog(this, "Por favor seleccione una fecha.", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String horaStr = (String) modeloTabla.getValueAt(selectedRow, 0);
+        Time horaTime = convertirHoraStringATime(horaStr);
+        if (horaTime == null) {
+            JOptionPane.showMessageDialog(this, "Formato de hora inválido: " + horaStr, "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        java.sql.Date fecha = new java.sql.Date(dateChooser.getDate().getTime());
+
+        Connection conn = null;
         try {
-            if (conn != null) {
-                conn.setAutoCommit(true);
-                conn.close();
+            conn = ConexionSQL.conectar();
+            conn.setAutoCommit(false);
+
+            // Activar XACT_ABORT para transacciones distribuidas
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("SET XACT_ABORT ON;");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+            // Iniciar transacción distribuida
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("BEGIN DISTRIBUTED TRANSACTION;");
+            }
+
+            int idMedico = obtenerIdMedico(conn, nombreMedico);
+            if (idMedico == -1) throw new SQLException("No se pudo obtener el ID del médico");
+
+            int idCita = generarNuevoIdCita(conn);
+
+            String sqlInsert;
+            String idCentroDestino;
+
+            if (this.sedeSelect.equalsIgnoreCase("QUITO")) {
+                // Insertar en linked server de Guayaquil desde Quito
+                sqlInsert = "INSERT INTO [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.CITA_G " +
+                        "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
+                idCentroDestino = "G"; // respeta el CHECK de CITA_G
+            } else {
+                // Insertar en linked server de Quito desde Guayaquil
+                sqlInsert = "INSERT INTO [VID_QUITO].[BQuito2].dbo.CITA_Q " +
+                        "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
+                idCentroDestino = "Q"; // respeta el CHECK de CITA_Q
+            }
+
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlInsert)) {
+                pstmt.setInt(1, idCita);
+                pstmt.setDate(2, fecha);
+                pstmt.setString(3, cedulaPaciente);
+                pstmt.setTime(4, horaTime);
+                pstmt.setInt(5, idMedico);
+                pstmt.setString(6, idCentroDestino);
+
+
+                int filas = pstmt.executeUpdate();
+                if (filas == 0) throw new SQLException("No se pudo insertar la cita");
+            }
+
+            conn.commit();
+
+            JOptionPane.showMessageDialog(this,
+                    "Cita agendada exitosamente:\n" +
+                            "Paciente: " + cedulaPaciente + "\n" +
+                            "Fecha: " + fecha + "\n" +
+                            "Hora: " + horaStr + "\n" +
+                            "Médico: " + nombreMedico + "\n" +
+                            "Centro: " + (this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G"),
+                    "Éxito",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            modeloTabla.setValueAt("Ocupado", selectedRow, 1);
+
+        } catch (SQLException ex) {
+            try { if (conn != null) conn.rollback(); } catch (SQLException e) { e.printStackTrace(); }
+            JOptionPane.showMessageDialog(this, "Error al agendar cita: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (conn != null) { conn.setAutoCommit(true); conn.close(); }
+            } catch (SQLException e) { e.printStackTrace(); }
         }
     }
-}
 
-   
+
+
+
+
+
 
     // Método para generar un nuevo ID de cita
     private int generarNuevoIdCita(Connection conn) throws SQLException {
@@ -530,68 +498,66 @@ public class AgendamientoWindow extends JFrame {
             return 1; // Si no hay citas, empezar con 1
         }
     }
-
-    // Método para obtener ID del médico
  
     
     private Time convertirHoraStringATime(String horaStr) {
-    try {
-        // Crear formateador con Locale.US para asegurar que entienda AM/PM
-        SimpleDateFormat displayFormat = new SimpleDateFormat("hh:mm a", Locale.US);
-        Date horaDate = displayFormat.parse(horaStr);
-        
-        // Convertir a java.sql.Time
-        return new Time(horaDate.getTime());
-    } catch (ParseException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, 
-            "Error al convertir la hora: " + horaStr,
-            "Error de formato", 
-            JOptionPane.ERROR_MESSAGE);
-        return null;
+        try {
+            // Crear formateador con Locale.US para asegurar que entienda AM/PM
+            SimpleDateFormat displayFormat = new SimpleDateFormat("hh:mm a", Locale.US);
+            Date horaDate = displayFormat.parse(horaStr);
+
+            // Convertir a java.sql.Time
+            return new Time(horaDate.getTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Error al convertir la hora: " + horaStr,
+                "Error de formato",
+                JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
     }
-}
     
-    private int obtenerIdMedico(String nombreMedico) throws SQLException {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT ID_MEDICO FROM MEDICO_"+tableSuffix+" WHERE NOMBRE = ?";
-        try (Connection conn = ConexionSQL.conectar();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, nombreMedico);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getInt("ID_MEDICO") : -1;
-            }
-        }
-    }
+//    private int obtenerIdMedico(String nombreMedico) throws SQLException {
+//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+//        String sql = "SELECT ID_MEDICO FROM MEDICO_"+tableSuffix+" WHERE NOMBRE = ?";
+//        try (Connection conn = ConexionSQL.conectar();
+//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//            pstmt.setString(1, nombreMedico);
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                return rs.next() ? rs.getInt("ID_MEDICO") : -1;
+//            }
+//        }
+//    }
 
-    private int obtenerIdCentroMedico(int idMedico) throws SQLException {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT ID_CENTRO FROM MEDICO_"+tableSuffix+" WHERE ID_MEDICO = ?";
-        try (Connection conn = ConexionSQL.conectar();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, idMedico);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
-            }
-        }
-    }
+//    private int obtenerIdCentroMedico(int idMedico) throws SQLException {
+//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+//        String sql = "SELECT ID_CENTRO FROM MEDICO_"+tableSuffix+" WHERE ID_MEDICO = ?";
+//        try (Connection conn = ConexionSQL.conectar();
+//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//            pstmt.setInt(1, idMedico);
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
+//            }
+//        }
+//    }
 
-    private int generarNuevoIdCita() throws SQLException {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT MAX(ID_CITA) + 1 AS NUEVO_ID FROM CITA_"+tableSuffix;
-        try (Connection conn = ConexionSQL.conectar();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            return rs.next() ? rs.getInt("NUEVO_ID") : 1;
-        }
-    }
+//    private int generarNuevoIdCita() throws SQLException {
+//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+//        String sql = "SELECT MAX(ID_CITA) + 1 AS NUEVO_ID FROM CITA_"+tableSuffix;
+//        try (Connection conn = ConexionSQL.conectar();
+//             Statement stmt = conn.createStatement();
+//             ResultSet rs = stmt.executeQuery(sql)) {
+//            return rs.next() ? rs.getInt("NUEVO_ID") : 1;
+//        }
+//    }
 
     /**
      * Valida si un paciente existe en la base de datos
      */
     private boolean validarPaciente(String cedula) throws SQLException {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT 1 FROM PACIENTE_"+tableSuffix+" WHERE CEDULA = ?";
+//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+        String sql = "SELECT 1 FROM PACIENTE WHERE CEDULA = ?";
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, cedula);
@@ -601,16 +567,16 @@ public class AgendamientoWindow extends JFrame {
         }
     }
 
-    private int obtenerIdCentroMedico(Connection conn, int idMedico) throws SQLException {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT ID_CENTRO FROM MEDICO_"+tableSuffix+" WHERE ID_MEDICO = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, idMedico);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
-            }
-        }
-    }
+//    private int obtenerIdCentroMedico(Connection conn, int idMedico) throws SQLException {
+//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+//        String sql = "SELECT ID_CENTRO FROM MEDICO_"+tableSuffix+" WHERE ID_MEDICO = ?";
+//        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+//            pstmt.setInt(1, idMedico);
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
+//            }
+//        }
+//    }
 
     private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
         try {
