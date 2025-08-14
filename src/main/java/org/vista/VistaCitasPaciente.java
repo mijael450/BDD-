@@ -106,10 +106,10 @@ public class VistaCitasPaciente extends JFrame {
                 "   WHEN c.ID_CENTRO = 'G' THEN eg.NOMBRE " +
                 "END AS ESPECIALIDAD, " +
                 "c.ID_CENTRO AS CENTRO " +
-                "FROM CITA_GLOBAL c " +
+                "FROM [VID].[BQuito2].[dbo].[CITA_GLOBAL] c " +
                 "JOIN MEDICO_IDENTIFICACION m ON c.ID_MEDICO = m.ID_MEDICO " +
-                "LEFT JOIN [BQuito2].[dbo].[MEDICO_PERFIL_PROFESIONAL_Q] pq ON c.ID_MEDICO = pq.ID_MEDICO AND c.ID_CENTRO = 'Q' " +
-                "LEFT JOIN [BQuito2].[dbo].[ESPECIALIDAD_Q] eq ON pq.ID_ESPECIALIDAD = eq.ID_ESPECIALIDAD " +
+                "LEFT JOIN [VID].[BQuito2].[dbo].[MEDICO_PERFIL_PROFESIONAL_Q] pq ON c.ID_MEDICO = pq.ID_MEDICO AND c.ID_CENTRO = 'Q' " +
+                "LEFT JOIN [VID].[BQuito2].[dbo].[ESPECIALIDAD_Q] eq ON pq.ID_ESPECIALIDAD = eq.ID_ESPECIALIDAD " +
                 "LEFT JOIN [LAPTOP-J4CMJHBK].[BGuayaquil].[dbo].[MEDICO_PERFIL_PROFESIONAL_G] pg ON c.ID_MEDICO = pg.ID_MEDICO AND c.ID_CENTRO = 'G' " +
                 "LEFT JOIN [LAPTOP-J4CMJHBK].[BGuayaquil].[dbo].[ESPECIALIDAD_G] eg ON pg.ID_ESPECIALIDAD = eg.ID_ESPECIALIDAD " +
                 "WHERE c.CEDULA = ? " +
