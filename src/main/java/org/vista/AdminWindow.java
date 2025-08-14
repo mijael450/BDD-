@@ -13,6 +13,10 @@ public class AdminWindow extends JFrame {
         createComponents();
     }
 
+    AdminWindow() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
     private void initializeWindow() {
         setTitle("Panel del Administrador");
         setSize(900, 500);

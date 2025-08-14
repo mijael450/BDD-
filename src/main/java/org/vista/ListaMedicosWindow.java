@@ -14,14 +14,11 @@ public class ListaMedicosWindow extends JFrame {
 
     private JTable tablaMedicos;
     private DefaultTableModel modeloTabla;
-    private String sedeSelect;
 
-    public ListaMedicosWindow( String sedeSelect) {
+    public ListaMedicosWindow(String sedeSelect) {
 
-        this.sedeSelect = sedeSelect;
-
-        setTitle("Lista de Médicos" );
-        setSize(850, 600);
+        setTitle("Lista de Médicos");
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -39,7 +36,7 @@ public class ListaMedicosWindow extends JFrame {
         add(panelSuperior, BorderLayout.NORTH);
 
         // ---------- TABLA ----------
-        String[] columnas = {"ID Médico", "Nombre", "Teléfono", "ID Especialidad", "ID Centro", "Ciudad"};
+        String[] columnas = {"ID Médico", "Nombre", "Teléfono"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -65,7 +62,7 @@ public class ListaMedicosWindow extends JFrame {
         btnRegresar.setFocusPainted(false);
         btnRegresar.setFont(new Font("Arial", Font.PLAIN, 13));
         btnRegresar.addActionListener(e -> {
-            new AdminWindow(sedeSelect).setVisible(true);  // Regresa al panel del administrador
+            new AdminWindow(sedeSelect).setVisible(true);
             dispose();
         });
 
@@ -78,14 +75,11 @@ public class ListaMedicosWindow extends JFrame {
         setVisible(true);
     }
 
-
     private void buscarMedicosDesdeDB() {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
         modeloTabla.setRowCount(0);
 
-        // Cambia el nombre de la base si es necesario según tu conexión
-        String nombreVista = "Medico";  // Vista en la base de datos
-        String sql = "SELECT ID_MEDICO, NOMBRE, TELEFONO, ID_ESPECIALIDAD, ID_CENTRO, CIUDAD FROM " + nombreVista;
+        String sql = "SELECT TOP (1000) ID_MEDICO, NOMBRE, TELEFONO " +
+                     "FROM [BQuito2].[dbo].[MEDICO_IDENTIFICACION]";
 
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -95,10 +89,7 @@ public class ListaMedicosWindow extends JFrame {
                 Object[] fila = {
                         rs.getInt("ID_MEDICO"),
                         rs.getString("NOMBRE"),
-                        rs.getString("TELEFONO"),
-                        rs.getInt("ID_ESPECIALIDAD"),
-                        rs.getInt("ID_CENTRO"),
-                        rs.getString("CIUDAD")
+                        rs.getString("TELEFONO")
                 };
                 modeloTabla.addRow(fila);
             }
@@ -108,30 +99,6 @@ public class ListaMedicosWindow extends JFrame {
                     "Error al buscar médicos: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
-        }
-    }
-
-
-    private void exportarMedicos() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Guardar citas como CSV");
-
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String filePath = fileChooser.getSelectedFile().getPath();
-            if (!filePath.toLowerCase().endsWith(".csv")) {
-                filePath += ".csv";
-            }
-
-            try {
-                // Aquí puedes agregar el código real para exportar a CSV si lo necesitas
-                JOptionPane.showMessageDialog(this,
-                        "Datos exportados exitosamente a: " + filePath,
-                        "Exportación", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Error al exportar: " + ex.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
-            }
         }
     }
 }
