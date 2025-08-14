@@ -198,8 +198,9 @@ public class PacienteRegister extends JFrame {
         // Acción del botón registrar
         btnRegistrar.addActionListener(e -> {
             String cedula = txtCedula.getText().trim();
-            String nombres = txtNombres.getText().trim();
+            String nombre = txtNombres.getText().trim();
             String apellidos = txtApellidos.getText().trim();
+            String nombres = nombre + " " + apellidos;
             Date fecha = JDateNacimiento.getDate(); // Esto da un objeto Date
                 String fechaNacStr = "";
     
@@ -235,20 +236,12 @@ public class PacienteRegister extends JFrame {
             }
 
             try (Connection conn = ConexionSQL.conectar()) {
-                // Determinar si es Quito o Guayaquil para la fragmentación
-                boolean esQuito = ciudad.equalsIgnoreCase("Quito");
-                boolean esGuayaquil = ciudad.equalsIgnoreCase("Guayaquil");
-
-                // Insertar en la tabla principal de pacientes
-                String sqlPaciente = esQuito ? 
-                    "INSERT INTO PACIENTE_Q (CEDULA, NOMBRE, FECHA_NAC, SEXO, TELEFONO, EMAIL, CIUDAD, DIRECCION) VALUES (?, ?, ?, ?, ?, ?, ?, ?)" :
-                    esGuayaquil ? 
-                    "INSERT INTO PACIENTE_G (CEDULA, NOMBRE, FECHA_NAC, SEXO, TELEFONO, EMAIL, CIUDAD, DIRECCION) VALUES (?, ?, ?, ?, ?, ?, ?, ?)" :
-                    "INSERT INTO PACIENTE_Q (CEDULA, NOMBRE, FECHA_NAC, SEXO, TELEFONO, EMAIL, CIUDAD, DIRECCION) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"; // Por defecto Quito
+                // Single SQL statement for all patients regardless of city
+                String sqlPaciente = "INSERT INTO PACIENTE (CEDULA, NOMBRE, FECHA_NAC, SEXO, TELEFONO, EMAIL, CIUDAD, DIRECCION) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
                 try (PreparedStatement ps = conn.prepareStatement(sqlPaciente)) {
                     ps.setString(1, cedula);
-                    ps.setString(2, nombres + " " + apellidos);
+                    ps.setString(2, nombres);
                     ps.setDate(3, new java.sql.Date(fechaNac.getTime()));
                     ps.setString(4, sexo);
                     ps.setString(5, telefono);
@@ -259,15 +252,12 @@ public class PacienteRegister extends JFrame {
                     int filas = ps.executeUpdate();
 
                     if (filas > 0) {
-                        // Insertar en tablas fragmentadas verticalmente
-                        insertarPacienteVertical(conn, cedula, nombres, apellidos, fechaNac, sexo, ciudad, telefono, email, direccion, esQuito);
-                        
                         JOptionPane.showMessageDialog(this, "Paciente registrado exitosamente!", "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
                         limpiarCampos(txtCedula, txtNombres, txtApellidos, txtTelefono, txtEmail, txtDireccion);
                     }
                 }
             } catch (SQLException ex) {
-                if (ex.getErrorCode() == 2627 || ex.getErrorCode() == 2601) { // Violación de clave primaria
+                if (ex.getErrorCode() == 2627 || ex.getErrorCode() == 2601) {
                     JOptionPane.showMessageDialog(this, "La cédula ingresada ya está registrada.", "Error", JOptionPane.ERROR_MESSAGE);
                 } else {
                     ex.printStackTrace();
@@ -279,39 +269,39 @@ public class PacienteRegister extends JFrame {
         mainPanel.add(rightPanel);
     }
 
-    private void insertarPacienteVertical(Connection conn, String cedula, String nombres, String apellidos, 
-                                        Date fechaNac, String sexo, String ciudad, 
-                                        String telefono, String email, String direccion,
-                                        boolean esQuito) throws SQLException {
-        // Insertar en datos básicos
-        String sqlDatosBasicos = esQuito ?
-            "INSERT INTO PACIENTE_DATOS_BASICOS_Q (CEDULA, NOMBRE, FECHA_NAC, SEXO, CIUDAD) VALUES (?, ?, ?, ?, ?)" :
-            "INSERT INTO PACIENTE_DATOS_BASICOS_G (CEDULA, NOMBRE, FECHA_NAC, SEXO, CIUDAD) VALUES (?, ?, ?, ?, ?)";
-
-        try (PreparedStatement ps = conn.prepareStatement(sqlDatosBasicos)) {
-            ps.setString(1, cedula);
-            ps.setString(2, nombres + " " + apellidos);
-            ps.setDate(3, new java.sql.Date(fechaNac.getTime()));
-            ps.setString(4, sexo);
-            ps.setString(5, ciudad);
-            ps.executeUpdate();
-        }
-
-        // Insertar en datos de contacto
-        String sqlContacto = esQuito ?
-            "INSERT INTO PACIENTE_CONTACTO_Q (CEDULA, TELEFONO, EMAIL, DIRECCION, CIUDAD) VALUES (?, ?, ?, ?, ?)" :
-            "INSERT INTO PACIENTE_CONTACTO_G (CEDULA, TELEFONO, EMAIL, DIRECCION, CIUDAD) VALUES (?, ?, ?, ?, ?)";
-
-       try (PreparedStatement ps = conn.prepareStatement(sqlContacto)) {
-    ps.setString(1, cedula);
-    ps.setString(2, telefono);
-    ps.setString(3, email);
-    ps.setString(4, direccion);
-    ps.setString(5, ciudad); // ← nuevo parámetro
-    ps.executeUpdate();
-}
-
-    }
+//    private void insertarPacienteVertical(Connection conn, String cedula, String nombres, String apellidos,
+//                                        Date fechaNac, String sexo, String ciudad,
+//                                        String telefono, String email, String direccion,
+//                                        boolean esQuito) throws SQLException {
+//        // Insertar en datos básicos
+//        String sqlDatosBasicos = esQuito ?
+//            "INSERT INTO PACIENTE_DATOS_BASICOS_Q (CEDULA, NOMBRE, FECHA_NAC, SEXO, CIUDAD) VALUES (?, ?, ?, ?, ?)" :
+//            "INSERT INTO PACIENTE_DATOS_BASICOS_G (CEDULA, NOMBRE, FECHA_NAC, SEXO, CIUDAD) VALUES (?, ?, ?, ?, ?)";
+//
+//        try (PreparedStatement ps = conn.prepareStatement(sqlDatosBasicos)) {
+//            ps.setString(1, cedula);
+//            ps.setString(2, nombres + " " + apellidos);
+//            ps.setDate(3, new java.sql.Date(fechaNac.getTime()));
+//            ps.setString(4, sexo);
+//            ps.setString(5, ciudad);
+//            ps.executeUpdate();
+//        }
+//
+//        // Insertar en datos de contacto
+//        String sqlContacto = esQuito ?
+//            "INSERT INTO PACIENTE_CONTACTO_Q (CEDULA, TELEFONO, EMAIL, DIRECCION, CIUDAD) VALUES (?, ?, ?, ?, ?)" :
+//            "INSERT INTO PACIENTE_CONTACTO_G (CEDULA, TELEFONO, EMAIL, DIRECCION, CIUDAD) VALUES (?, ?, ?, ?, ?)";
+//
+//       try (PreparedStatement ps = conn.prepareStatement(sqlContacto)) {
+//        ps.setString(1, cedula);
+//        ps.setString(2, telefono);
+//        ps.setString(3, email);
+//        ps.setString(4, direccion);
+//        ps.setString(5, ciudad); // ← nuevo parámetro
+//        ps.executeUpdate();
+//        }
+//
+//    }
 
     private void limpiarCampos(JTextField... campos) {
         for (JTextField campo : campos) {
