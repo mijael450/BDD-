@@ -1,9 +1,12 @@
 package org.vista;
 
+import com.sun.tools.javac.Main;
 import org.config.ConexionSQL;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.*;
 
 public class EspecialidadRegisterWindow extends JFrame {
@@ -69,67 +72,120 @@ public class EspecialidadRegisterWindow extends JFrame {
     }
 
     private void registrarEspecialidad() {
-    String nombre = txtNombreEspecialidad.getText().trim();
-    String descripcion = txtDescripcion.getText().trim();
+        String nombre = txtNombreEspecialidad.getText().trim();
+        String descripcion = txtDescripcion.getText().trim();
 
-    if (nombre.isEmpty() || descripcion.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.",
-                "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    Connection conn = null;
-    try {
-        // Conexión a la base central (vista)
-        conn = ConexionSQL.conectar(); // Debes crear este método para conectar a la BD que contiene la vista
-        conn.setAutoCommit(false); // Control manual de commit
-
-        int nuevoId = obtenerIdEspecialidadDisponible(conn);
-
-        // Armamos la transacción distribuida
-        String sql = "SET XACT_ABORT ON; " +
-                     "BEGIN DISTRIBUTED TRANSACTION; " +
-                     "INSERT INTO Especialidad (ID_ESPECIALIDAD, NOMBRE, DESCRIPCION) " +
-                     "VALUES (?, ?, ?); " +
-                     "COMMIT TRANSACTION;";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, nuevoId);
-            ps.setString(2, nombre);
-            ps.setString(3, descripcion);
-            ps.executeUpdate();
+        if (nombre.isEmpty() || descripcion.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.",
+                    "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
-        JOptionPane.showMessageDialog(this, "Especialidad registrada exitosamente.",
-                "Éxito", JOptionPane.INFORMATION_MESSAGE);
-        limpiarCampos();
+        Connection conn = null;
+        try {
+            conn = ConexionSQL.conectar();
+            //  Verificar DTC antes de continuar
+            if (!verificarDTC()) {
+                JOptionPane.showMessageDialog(this,
+                        "El servicio DTC no está disponible. ",
+                        "DTC", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            conn.setAutoCommit(false); // Evitar commit local
 
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, "Error al registrar especialidad: " + ex.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-        try {
-            if (conn != null) conn.rollback();
-        } catch (SQLException rollbackEx) {
-            rollbackEx.printStackTrace();
-        }
-    } finally {
-        try {
-            if (conn != null) conn.close();
+            String ciudad = (String) comboCiudad.getSelectedItem();
+            String tabla = ciudad.equalsIgnoreCase("Quito")
+                    ? "[VID].[BQuito2].dbo.ESPECIALIDAD_Q"
+                    : "[LAPTOP-J4CMJHBK].[BGuayaquil].dbo.ESPECIALIDAD_G";
+
+            String sql =
+                    "SET XACT_ABORT ON; " +
+                            "BEGIN DISTRIBUTED TRANSACTION; " +
+                            "DECLARE @NuevoId INT; " +
+                            "SELECT @NuevoId = ISNULL(MAX(ID_ESPECIALIDAD), ?) + 1 FROM " + tabla + "; " +
+                            "INSERT INTO " + tabla + " (ID_ESPECIALIDAD, NOMBRE, DESCRIPCION) VALUES (@NuevoId, ?, ?); " +
+                            "COMMIT TRANSACTION;";
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, ciudad.equalsIgnoreCase("Quito") ? 100 : 200);
+                ps.setString(2, nombre);
+                ps.setString(3, descripcion);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            JOptionPane.showMessageDialog(this, "Especialidad registrada exitosamente en " + ciudad,
+                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            limpiarCampos();
+
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error DTC o SQL: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        } finally {
+            try {
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
-}
+
+
+    /**
+     * Verifica si el servicio MS-DTC está activo
+     */
+    private boolean verificarDTC() {
+        try {
+            // Verificar mediante comando del sistema
+            ProcessBuilder pb = new ProcessBuilder("sc", "query", "MSDTC");
+            Process process = pb.start();
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.contains("STATE") && line.contains("RUNNING")) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+
+        } catch (Exception ex) {
+            System.err.println("Error verificando DTC: " + ex.getMessage());
+            return false;
+        }
+    }
 
 
     private int obtenerIdEspecialidadDisponible(Connection conn) throws SQLException {
-        String sql = "SELECT MAX(ID_ESPECIALIDAD) FROM ESPECIALIDAD";
+        String ciudad = (String) comboCiudad.getSelectedItem();
+        String tabla;
+
+        // Determinar tabla según ciudad
+        if ("Quito".equalsIgnoreCase(ciudad)) {
+            tabla = "[VID].[BQuito2].dbo.ESPECIALIDAD_Q";
+        } else {
+            tabla = "[LAPTOP-J4CMJHBK].[BGuayaquil].dbo.ESPECIALIDAD_G";
+        }
+
+        String sql = "SELECT MAX(ID_ESPECIALIDAD) FROM " + tabla;
         try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            return rs.next() ? rs.getInt(1) + 1 : 1;
+            int maxId = 0;
+            if (rs.next()) {
+                maxId = rs.getInt(1);
+            }
+            return maxId > 0 ? maxId + 1 : (ciudad.equalsIgnoreCase("Quito") ? 100 : 200);
         }
     }
+
 
     private void limpiarCampos() {
         txtNombreEspecialidad.setText("");
