@@ -423,26 +423,39 @@ public class AgendamientoWindow extends JFrame {
             int idMedico = obtenerIdMedico(conn, nombreMedico);
             if (idMedico == -1) throw new SQLException("No se pudo obtener el ID del médico");
 
-            int idCita = generarNuevoIdCita(conn);
+            // Obtener la especialidad del médico
+            int idEspecialidad = obtenerEspecialidadMedico(conn, idMedico, this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G");
+            if (idEspecialidad == -1) throw new SQLException("No se pudo obtener la especialidad del médico");
 
-            String sqlInsert;
+            int idCita = generarNuevoIdCita(conn);
+            int idConsultaHistorial = generarNuevoIdHistorial(conn, this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G");
+
+            String sqlInsertCita;
+            String sqlInsertHistorial;
             String idCentroDestino;
 
             if (this.sedeSelect.equalsIgnoreCase("QUITO")) {
                 // Insertar en linked server de Guayaquil desde Quito
-                sqlInsert = "INSERT INTO [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.CITA_G " +
+                sqlInsertCita = "INSERT INTO [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.CITA_G " +
                         "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
-                idCentroDestino = "G"; // respeta el CHECK de CITA_G
+                sqlInsertHistorial = "INSERT INTO [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.HISTORIAL_G " +
+                        "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
+                idCentroDestino = "G";
             } else {
                 // Insertar en linked server de Quito desde Guayaquil
-                sqlInsert = "INSERT INTO [VID_QUITO].[BQuito2].dbo.CITA_Q " +
+                sqlInsertCita = "INSERT INTO [VID_QUITO].[BQuito2].dbo.CITA_Q " +
                         "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
-                idCentroDestino = "Q"; // respeta el CHECK de CITA_Q
+                sqlInsertHistorial = "INSERT INTO [VID_QUITO].[BQuito2].dbo.HISTORIAL_Q " +
+                        "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
+                idCentroDestino = "Q";
             }
 
-            try (PreparedStatement pstmt = conn.prepareStatement(sqlInsert)) {
+            // Insertar la cita
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlInsertCita)) {
                 pstmt.setInt(1, idCita);
                 pstmt.setDate(2, fecha);
                 pstmt.setString(3, cedulaPaciente);
@@ -450,38 +463,89 @@ public class AgendamientoWindow extends JFrame {
                 pstmt.setInt(5, idMedico);
                 pstmt.setString(6, idCentroDestino);
 
-
                 int filas = pstmt.executeUpdate();
                 if (filas == 0) throw new SQLException("No se pudo insertar la cita");
+            }
+
+            // Insertar en el historial
+            try (PreparedStatement pstmtHistorial = conn.prepareStatement(sqlInsertHistorial)) {
+                pstmtHistorial.setInt(1, idConsultaHistorial);
+                pstmtHistorial.setDate(2, fecha);
+                pstmtHistorial.setString(3, cedulaPaciente);
+                pstmtHistorial.setString(4, idCentroDestino);
+                pstmtHistorial.setInt(5, idMedico);
+                pstmtHistorial.setInt(6, idEspecialidad);
+
+                int filasHistorial = pstmtHistorial.executeUpdate();
+                if (filasHistorial == 0) throw new SQLException("No se pudo insertar en el historial");
             }
 
             conn.commit();
 
             JOptionPane.showMessageDialog(this,
                     "Cita agendada exitosamente:\n" +
-                            "Paciente: " + cedulaPaciente + "\n" +
-                            "Fecha: " + fecha + "\n" +
-                            "Hora: " + horaStr + "\n" +
-                            "Médico: " + nombreMedico + "\n" +
-                            "Centro: " + (this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G"),
+                    "Paciente: " + cedulaPaciente + "\n" +
+                    "Fecha: " + fecha + "\n" +
+                    "Hora: " + horaStr + "\n" +
+                    "Médico: " + nombreMedico + "\n" +
+                    "Centro: " + (this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G"),
                     "Éxito",
                     JOptionPane.INFORMATION_MESSAGE);
 
             modeloTabla.setValueAt("Ocupado", selectedRow, 1);
 
         } catch (SQLException ex) {
-            try { if (conn != null) conn.rollback(); } catch (SQLException e) { e.printStackTrace(); }
-            JOptionPane.showMessageDialog(this, "Error al agendar cita: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex1) {
+                    ex1.printStackTrace();
+                }
+            }
+            JOptionPane.showMessageDialog(this, "Error al agendar cita: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         } finally {
-            try {
-                if (conn != null) { conn.setAutoCommit(true); conn.close(); }
-            } catch (SQLException e) { e.printStackTrace(); }
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
     }
 
 
+    private int obtenerEspecialidadMedico(Connection conn, int idMedico, String idCentro) throws SQLException {
+        String sql = "SELECT ID_ESPECIALIDAD FROM MEDICO_PERFIL_PROFESIONAL_Q WHERE ID_MEDICO = ? AND ID_CENTRO = ?";
+        if (!idCentro.equals("Q")) {
+            sql = "SELECT ID_ESPECIALIDAD FROM [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.MEDICO_PERFIL_PROFESIONAL_G WHERE ID_MEDICO = ? AND ID_CENTRO = ?";
+        }
 
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idMedico);
+            pstmt.setString(2, idCentro);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("ID_ESPECIALIDAD");
+            }
+        }
+        return -1;
+    }
+
+    private int generarNuevoIdHistorial(Connection conn, String sede) throws SQLException {
+        String sql = "SELECT ISNULL(MAX(ID_CONSULTA), 0) + 1 AS NUEVO_ID FROM HISTORIAL_Q";
+        if (sede.equals("G")) {
+            sql = "SELECT ISNULL(MAX(ID_CONSULTA), 0) + 1 AS NUEVO_ID FROM [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.HISTORIAL_G";
+        }
+
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt("NUEVO_ID");
+            }
+        }
+        return -1;
+    }
 
 
 
