@@ -454,6 +454,30 @@ public class AgendamientoWindow extends JFrame {
                 cs.execute();
             }
 
+            String sqlInsertHistorial = String.format(
+                    "INSERT INTO HISTORIAL_%s (ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
+                            "VALUES (?, ?, ?, ?, ?, ?)",
+                    tableSuffix
+            );
+
+            try (PreparedStatement pstmtHist = conn.prepareStatement(sqlInsertHistorial)) {
+                pstmtHist.setInt(1, idCita); // Usamos el mismo ID de cita como ID_CONSULTA
+                pstmtHist.setDate(2, fecha);
+                pstmtHist.setString(3, cedulaPaciente);
+                pstmtHist.setString(4, tableSuffix);
+                pstmtHist.setInt(5, idMedico);
+
+                // Obtener ID de especialidad seleccionada
+                String nombreEspecialidad = (String) cmbEspecialidad.getSelectedItem();
+                int idEspecialidad = obtenerIdEspecialidad(conn, nombreEspecialidad, tableSuffix);
+                pstmtHist.setInt(6, idEspecialidad);
+
+                int filasHist = pstmtHist.executeUpdate();
+                if (filasHist <= 0) {
+                    throw new SQLException("No se pudo insertar en HISTORIAL_" + tableSuffix);
+                }
+            }
+
             JOptionPane.showMessageDialog(this,
                     "Cita agendada exitosamente en la sede " + tableSuffix + ":\n" +
                             "Paciente: " + this.nombrePaciente + "\n" +
@@ -569,6 +593,20 @@ public class AgendamientoWindow extends JFrame {
             pstmt.setString(1, cedula);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next();
+            }
+        }
+    }
+
+    private int obtenerIdEspecialidad(Connection conn, String nombreEspecialidad, String tableSuffix) throws SQLException {
+        String sql = "SELECT ID_ESPECIALIDAD FROM ESPECIALIDAD_" + tableSuffix + " WHERE NOMBRE = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, nombreEspecialidad);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new SQLException("No se encontró la especialidad " + nombreEspecialidad + " en la sede " + tableSuffix);
+                }
             }
         }
     }
