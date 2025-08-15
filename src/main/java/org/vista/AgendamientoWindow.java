@@ -435,23 +435,23 @@ public class AgendamientoWindow extends JFrame {
             String idCentroDestino;
 
             if (this.sedeSelect.equalsIgnoreCase("QUITO")) {
-                // Insertar en linked server de Guayaquil desde Quito
-                sqlInsertCita = "INSERT INTO [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.CITA_G " +
+                // Insertar en la base de datos local (Quito)
+                sqlInsertCita = "INSERT INTO CITA_Q " +
                         "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
-                sqlInsertHistorial = "INSERT INTO [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.HISTORIAL_G " +
-                        "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-                idCentroDestino = "G";
-            } else {
-                // Insertar en linked server de Quito desde Guayaquil
-                sqlInsertCita = "INSERT INTO [VID_QUITO].[BQuito2].dbo.CITA_Q " +
-                        "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-                sqlInsertHistorial = "INSERT INTO [VID_QUITO].[BQuito2].dbo.HISTORIAL_Q " +
+                sqlInsertHistorial = "INSERT INTO HISTORIAL_Q " +
                         "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
                 idCentroDestino = "Q";
+            } else {
+                // Insertar en la base de datos local (Guayaquil)
+                sqlInsertCita = "INSERT INTO CITA_G " +
+                        "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
+                sqlInsertHistorial = "INSERT INTO HISTORIAL_G " +
+                        "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
+                idCentroDestino = "G";
             }
 
             // Insertar la cita

@@ -74,19 +74,24 @@ public class AdminWindow extends JFrame {
         JButton btnVerPacientes = new JButton("Ver Lista de Pacientes");
         JButton btnVerEspecialidades = new JButton("Ver Especialidades");
         JButton btnAgregarEspecialidad = new JButton("Agregar Especialidad");
+        JButton btnVerCitas = new JButton("Ver Citas"); // Nuevo botón
         JButton btnCerrarSesion = new JButton("Cerrar Sesión");
 
-        JButton[] botones = {btnRegistrarMedico, btnVerMedicos, btnVerPacientes, btnVerEspecialidades,btnAgregarEspecialidad,btnCerrarSesion};
-        int y = 80;
+        // Ajustamos el arreglo de botones para incluir el nuevo botón
+        JButton[] botones = {btnRegistrarMedico, btnVerMedicos, btnVerPacientes, 
+                            btnVerEspecialidades, btnAgregarEspecialidad, btnVerCitas, btnCerrarSesion};
+        
+        // Ajustamos el espaciado para que entren todos los botones
+        int y = 50;
         for (JButton boton : botones) {
-            boton.setBounds(100, y, 250, 40);
+            boton.setBounds(100, y, 250, 35); // Reducimos la altura para que quepan más botones
             boton.setFont(fontBoton);
             boton.setBackground(colorBoton);
-            boton.setForeground(colorTexto);  // Texto negro
+            boton.setForeground(colorTexto);
             boton.setFocusPainted(false);
             boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
             rightPanel.add(boton);
-            y += 60;
+            y += 45; // Reducimos el espacio entre botones
         }
 
         // Eventos
@@ -105,7 +110,6 @@ public class AdminWindow extends JFrame {
             dispose();
         });
 
-
         btnVerPacientes.addActionListener(e -> {
             new ListaPacientesWindow(this.sedeSelect).setVisible(true);
             dispose();
@@ -118,6 +122,12 @@ public class AdminWindow extends JFrame {
 
         btnAgregarEspecialidad.addActionListener(e -> {
             new EspecialidadRegisterWindow(this.sedeSelect).setVisible(true);
+            dispose();
+        });
+
+        // Evento para el nuevo botón Ver Citas
+        btnVerCitas.addActionListener(e -> {
+            new ListaCitasWindow(this.sedeSelect).setVisible(true);
             dispose();
         });
 
