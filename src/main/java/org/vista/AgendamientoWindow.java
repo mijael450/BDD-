@@ -1,19 +1,18 @@
 package org.vista;
-import com.toedter.calendar.JDateChooser;
-import org.config.ConexionSQL;
+
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
-import java.util.Random;
 import java.util.Set;
+import com.toedter.calendar.JDateChooser;
+import org.config.ConexionSQL;
 
 public class AgendamientoWindow extends JFrame {
 
@@ -35,8 +34,8 @@ public class AgendamientoWindow extends JFrame {
         this.cedulaPaciente = "";
     }
 
-    public AgendamientoWindow(String nombrePaciente, String cedulaPaciente,  String sedeSelect) {
-        this.nombrePaciente = nombrePaciente; 
+    public AgendamientoWindow(String nombrePaciente, String cedulaPaciente, String sedeSelect) {
+        this.nombrePaciente = nombrePaciente;
         this.cedulaPaciente = cedulaPaciente;
         this.sedeSelect = sedeSelect;
         setTitle("Gestión de Citas Médicas");
@@ -44,7 +43,6 @@ public class AgendamientoWindow extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-
 
         // -------- PANEL IZQUIERDO (Imagen + info paciente) --------
         JPanel panelIzquierdo = new JPanel();
@@ -79,8 +77,6 @@ public class AgendamientoWindow extends JFrame {
         lblCedulaValue.setForeground(Color.WHITE);
         lblCedulaValue.setFont(new Font("Arial", Font.PLAIN, 14));
 
-
-
         lblNombre.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblNombreValue.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblCedula.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -101,7 +97,6 @@ public class AgendamientoWindow extends JFrame {
         JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 10, 10));
         panelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         panelFormulario.setBackground(new Color(157, 209, 241));
-
 
         panelFormulario.add(new JLabel("Especialidad Médica:"));
         cmbEspecialidad = new JComboBox<>();
@@ -156,6 +151,7 @@ public class AgendamientoWindow extends JFrame {
         // Configurar el selector de fechas
         dateChooser.setMinSelectableDate(new Date());
         ((JTextField) dateChooser.getDateEditor().getUiComponent()).setEditable(false);
+
         // Botón "Regresar"
         JButton btnRegresar = new JButton("Regresar");
         btnRegresar.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -249,78 +245,75 @@ public class AgendamientoWindow extends JFrame {
         }
     }
 
-   
     private void buscarHorarios() {
-    String medico = (String) cmbMedico.getSelectedItem();
-    java.util.Date fechaUtil = dateChooser.getDate();
+        String medico = (String) cmbMedico.getSelectedItem();
+        java.util.Date fechaUtil = dateChooser.getDate();
 
-    if (fechaUtil == null || medico == null || medico.equals("Seleccione un médico...")) {
-        JOptionPane.showMessageDialog(this, "Por favor seleccione un médico y una fecha válida.");
-        return;
-    }
-
-    java.sql.Date fecha = new java.sql.Date(fechaUtil.getTime());
-    modeloTabla.setRowCount(0);
-    
-    Connection conn = null;
-    try {
-        conn = ConexionSQL.conectar();
-        
-        // Obtener ID del médico
-        int idMedico = obtenerIdMedico(conn, medico);
-        if (idMedico == -1) {
-            JOptionPane.showMessageDialog(this, "No se encontró el médico seleccionado.");
+        if (fechaUtil == null || medico == null || medico.equals("Seleccione un médico...")) {
+            JOptionPane.showMessageDialog(this, "Por favor seleccione un médico y una fecha válida.");
             return;
         }
-        
-        // Obtener horarios ocupados
-        Set<String> horariosOcupados = new HashSet<>();
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        
-        String sqlOcupados = "SELECT HORA FROM CITA_"+tableSuffix+" WHERE ID_MEDICO = ? AND FECHA = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sqlOcupados)) {
-            pstmt.setInt(1, idMedico);
-            pstmt.setDate(2, fecha);
 
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                Time horaTime = rs.getTime("HORA");
-                String horaFormateada = formatearHoraAMPM(horaTime);
-                horariosOcupados.add(horaFormateada);
+        java.sql.Date fecha = new java.sql.Date(fechaUtil.getTime());
+        modeloTabla.setRowCount(0);
+
+        Connection conn = null;
+        try {
+            conn = ConexionSQL.conectar();
+
+            // Obtener ID del médico
+            int idMedico = obtenerIdMedico(conn, medico);
+            if (idMedico == -1) {
+                JOptionPane.showMessageDialog(this, "No se encontró el médico seleccionado.");
+                return;
+            }
+
+            // Obtener horarios ocupados
+            Set<String> horariosOcupados = new HashSet<>();
+            String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+
+            String sqlOcupados = "SELECT CAST(HORA AS TIME) as HORA FROM CITA_"+tableSuffix+" WHERE ID_MEDICO = ? AND FECHA = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlOcupados)) {
+                pstmt.setInt(1, idMedico);
+                pstmt.setDate(2, fecha);
+
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    Time horaTime = rs.getTime("HORA");
+                    String horaFormateada = formatearHoraAMPM(horaTime);
+                    horariosOcupados.add(horaFormateada);
+                }
+            }
+
+            // Mostrar todos los horarios posibles
+            String[] horasDisponibles = {
+                    "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM",
+                    "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"
+            };
+
+            for (String hora : horasDisponibles) {
+                String estado = horariosOcupados.contains(hora) ? "Ocupado" : "Libre";
+                modeloTabla.addRow(new Object[]{hora, estado});
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al consultar horarios: " + ex.getMessage(),
+                    "Error de Base de Datos",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
-        
-        // Mostrar todos los horarios posibles
-        String[] horasDisponibles = {
-            "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM",
-            "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"
-        };
-        
-        for (String hora : horasDisponibles) {
-            String estado = horariosOcupados.contains(hora) ? "Ocupado" : "Libre";
-            modeloTabla.addRow(new Object[]{hora, estado});
-        }
-        
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al consultar horarios: " + ex.getMessage(),
-            "Error de Base de Datos", 
-            JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-    } finally {
-        try {
-            if (conn != null) conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+        scrollTabla.setVisible(true);
+        revalidate();
+        repaint();
     }
-    
-    scrollTabla.setVisible(true);
-    revalidate();
-    repaint();
-}
-    
-    
 
     // Método auxiliar para formatear la hora de Time a String
     private String formatearHora(Time horaTime) {
@@ -332,8 +325,8 @@ public class AgendamientoWindow extends JFrame {
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.US);
         return sdf.format(horaTime);
     }
-    
-    // Método para obtener ID del médico (reutilizado del código anterior)
+
+    // Método para obtener ID del médico
     private int obtenerIdMedico(Connection conn, String nombreMedico) throws SQLException {
         String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
 
@@ -354,7 +347,6 @@ public class AgendamientoWindow extends JFrame {
         }
         return -1; // Si no se encuentra
     }
-
 
     private void agendarCitaEnDB() {
         int selectedRow = tablaHorarios.getSelectedRow();
@@ -404,223 +396,173 @@ public class AgendamientoWindow extends JFrame {
         }
 
         java.sql.Date fecha = new java.sql.Date(dateChooser.getDate().getTime());
-
         Connection conn = null;
+        boolean transactionStarted = false;
+
         try {
             conn = ConexionSQL.conectar();
-            conn.setAutoCommit(false);
 
-            // Activar XACT_ABORT para transacciones distribuidas
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute("SET XACT_ABORT ON;");
-            }
-
-            // Iniciar transacción distribuida
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute("BEGIN DISTRIBUTED TRANSACTION;");
+            // Verificar disponibilidad antes de iniciar transacción
+            if (verificarDisponibilidadHorario(conn, nombreMedico, fecha, horaTime)) {
+                JOptionPane.showMessageDialog(this, "El horario ya no está disponible. Por favor seleccione otro.", "Horario Ocupado", JOptionPane.WARNING_MESSAGE);
+                buscarHorarios();
+                return;
             }
 
             int idMedico = obtenerIdMedico(conn, nombreMedico);
-            if (idMedico == -1) throw new SQLException("No se pudo obtener el ID del médico");
-
-            // Obtener la especialidad del médico
-            int idEspecialidad = obtenerEspecialidadMedico(conn, idMedico, this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G");
-            if (idEspecialidad == -1) throw new SQLException("No se pudo obtener la especialidad del médico");
-
-            int idCita = generarNuevoIdCita(conn);
-            int idConsultaHistorial = generarNuevoIdHistorial(conn, this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G");
-
-            String sqlInsertCita;
-            String sqlInsertHistorial;
-            String idCentroDestino;
-
-            if (this.sedeSelect.equalsIgnoreCase("QUITO")) {
-                // Insertar en la base de datos local (Quito)
-                sqlInsertCita = "INSERT INTO CITA_Q " +
-                        "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-                sqlInsertHistorial = "INSERT INTO HISTORIAL_Q " +
-                        "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-                idCentroDestino = "Q";
-            } else {
-                // Insertar en la base de datos local (Guayaquil)
-                sqlInsertCita = "INSERT INTO CITA_G " +
-                        "(ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-                sqlInsertHistorial = "INSERT INTO HISTORIAL_G " +
-                        "(ID_CONSULTA, FECHA, CEDULA, ID_CENTRO, ID_MEDICO, ID_ESPECIALIDAD) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-                idCentroDestino = "G";
+            if (idMedico == -1) {
+                JOptionPane.showMessageDialog(this, "No se pudo obtener el ID del médico", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
-            // Insertar la cita
-            try (PreparedStatement pstmt = conn.prepareStatement(sqlInsertCita)) {
+            int idCita = generarNuevoIdCita(conn);
+
+            // Iniciar transacción
+            conn.setAutoCommit(false);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("SET XACT_ABORT ON");
+            }
+
+            try (CallableStatement cs = conn.prepareCall("BEGIN DISTRIBUTED TRANSACTION")) {
+                cs.execute();
+                transactionStarted = true;
+            }
+
+            // Insertar SOLO en la tabla correspondiente a la ciudad
+            String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+            String sqlInsert = String.format(
+                    "INSERT INTO CITA_%s (ID_CITA, FECHA, CEDULA, HORA, ID_MEDICO, ID_CENTRO) VALUES (?, ?, ?, ?, ?, ?)",
+                    tableSuffix
+            );
+
+            try (PreparedStatement pstmt = conn.prepareStatement(sqlInsert)) {
                 pstmt.setInt(1, idCita);
                 pstmt.setDate(2, fecha);
                 pstmt.setString(3, cedulaPaciente);
                 pstmt.setTime(4, horaTime);
                 pstmt.setInt(5, idMedico);
-                pstmt.setString(6, idCentroDestino);
+                pstmt.setString(6, tableSuffix);
 
                 int filas = pstmt.executeUpdate();
-                if (filas == 0) throw new SQLException("No se pudo insertar la cita");
+                if (filas <= 0) {
+                    throw new SQLException("No se pudo insertar la cita en la sede " + tableSuffix);
+                }
             }
 
-            // Insertar en el historial
-            try (PreparedStatement pstmtHistorial = conn.prepareStatement(sqlInsertHistorial)) {
-                pstmtHistorial.setInt(1, idConsultaHistorial);
-                pstmtHistorial.setDate(2, fecha);
-                pstmtHistorial.setString(3, cedulaPaciente);
-                pstmtHistorial.setString(4, idCentroDestino);
-                pstmtHistorial.setInt(5, idMedico);
-                pstmtHistorial.setInt(6, idEspecialidad);
-
-                int filasHistorial = pstmtHistorial.executeUpdate();
-                if (filasHistorial == 0) throw new SQLException("No se pudo insertar en el historial");
+            // Commit de la transacción
+            try (CallableStatement cs = conn.prepareCall("COMMIT TRANSACTION")) {
+                cs.execute();
             }
-
-            conn.commit();
 
             JOptionPane.showMessageDialog(this,
-                    "Cita agendada exitosamente:\n" +
-                    "Paciente: " + cedulaPaciente + "\n" +
-                    "Fecha: " + fecha + "\n" +
-                    "Hora: " + horaStr + "\n" +
-                    "Médico: " + nombreMedico + "\n" +
-                    "Centro: " + (this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G"),
+                    "Cita agendada exitosamente en la sede " + tableSuffix + ":\n" +
+                            "Paciente: " + this.nombrePaciente + "\n" +
+                            "Cédula: " + cedulaPaciente + "\n" +
+                            "Fecha: " + fecha + "\n" +
+                            "Hora: " + horaStr + "\n" +
+                            "Médico: " + nombreMedico,
                     "Éxito",
                     JOptionPane.INFORMATION_MESSAGE);
 
             modeloTabla.setValueAt("Ocupado", selectedRow, 1);
 
         } catch (SQLException ex) {
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex1) {
-                    ex1.printStackTrace();
+            try {
+                if (transactionStarted && conn != null) {
+                    try (CallableStatement cs = conn.prepareCall("ROLLBACK TRANSACTION")) {
+                        cs.execute();
+                    }
                 }
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error en rollback: " + rollbackEx.getMessage());
             }
-            JOptionPane.showMessageDialog(this, "Error al agendar cita: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+
+            JOptionPane.showMessageDialog(this, "Error al agendar cita: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+
         } finally {
-            if (conn != null) {
-                try {
+            try {
+                if (conn != null) {
                     conn.setAutoCommit(true);
                     conn.close();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
 
 
-    private int obtenerEspecialidadMedico(Connection conn, int idMedico, String idCentro) throws SQLException {
-        String sql = "SELECT ID_ESPECIALIDAD FROM MEDICO_PERFIL_PROFESIONAL_Q WHERE ID_MEDICO = ? AND ID_CENTRO = ?";
-        if (!idCentro.equals("Q")) {
-            sql = "SELECT ID_ESPECIALIDAD FROM [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.MEDICO_PERFIL_PROFESIONAL_G WHERE ID_MEDICO = ? AND ID_CENTRO = ?";
-        }
+    // Método para verificar disponibilidad del horario antes de insertar
+    private boolean verificarDisponibilidadHorario(Connection conn, String nombreMedico, java.sql.Date fecha, Time hora) throws SQLException {
+        int idMedico = obtenerIdMedico(conn, nombreMedico);
+        if (idMedico == -1) return false;
+
+        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+        String sql = "SELECT COUNT(*) FROM CITA_" + tableSuffix + " WHERE ID_MEDICO = ? AND FECHA = ? AND CAST(HORA AS TIME) = CAST(? AS TIME)";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, idMedico);
-            pstmt.setString(2, idCentro);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("ID_ESPECIALIDAD");
+            pstmt.setDate(2, fecha);
+            pstmt.setTime(3, hora);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // true si ya existe una cita
+                }
             }
         }
-        return -1;
+        return false;
     }
 
-    private int generarNuevoIdHistorial(Connection conn, String sede) throws SQLException {
-        String sql = "SELECT ISNULL(MAX(ID_CONSULTA), 0) + 1 AS NUEVO_ID FROM HISTORIAL_Q";
-        if (sede.equals("G")) {
-            sql = "SELECT ISNULL(MAX(ID_CONSULTA), 0) + 1 AS NUEVO_ID FROM [LAPTOP-J4CMJHBK].[BGuayaquil].dbo.HISTORIAL_G";
-        }
-
-        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-            if (rs.next()) {
-                return rs.getInt("NUEVO_ID");
-            }
-        }
-        return -1;
-    }
-
-
-
-
-    // Método para generar un nuevo ID de cita
+    // Método para generar nuevo ID de cita usando vista global
     private int generarNuevoIdCita(Connection conn) throws SQLException {
-        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-        String sql = "SELECT MAX(ID_CITA) FROM CITA_"+tableSuffix;
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            if (rs.next()) {
-                return rs.getInt(1) + 1;
+        // Intentar usar la vista global primero
+        try {
+            String sqlGlobal = "SELECT MAX(ID_CITA) FROM [VID].[BQuito2].dbo.[CITA_GLOBAL]";
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sqlGlobal)) {
+                if (rs.next()) {
+                    int maxId = rs.getInt(1);
+                    return maxId > 0 ? maxId + 1 : 1;
+                }
             }
-            return 1; // Si no hay citas, empezar con 1
+        } catch (SQLException e) {
+            System.err.println("No se pudo acceder a CITA_GLOBAL: " + e.getMessage());
+        }
+
+        // Fallback: usar máximo de ambas tablas
+        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
+        String sqlLocal = "SELECT MAX(ID_CITA) FROM CITA_" + tableSuffix;
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sqlLocal)) {
+            if (rs.next()) {
+                int maxId = rs.getInt(1);
+                return maxId > 0 ? maxId + 1 : 1;
+            }
+            return 1;
         }
     }
- 
-    
+
     private Time convertirHoraStringATime(String horaStr) {
         try {
-            // Crear formateador con Locale.US para asegurar que entienda AM/PM
             SimpleDateFormat displayFormat = new SimpleDateFormat("hh:mm a", Locale.US);
             Date horaDate = displayFormat.parse(horaStr);
 
-            // Convertir a java.sql.Time
+            // Crear un Time solo con la parte de tiempo, no con fecha
             return new Time(horaDate.getTime());
         } catch (ParseException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Error al convertir la hora: " + horaStr,
-                "Error de formato",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error al convertir la hora: " + horaStr,
+                    "Error de formato",
+                    JOptionPane.ERROR_MESSAGE);
             return null;
         }
     }
-    
-//    private int obtenerIdMedico(String nombreMedico) throws SQLException {
-//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-//        String sql = "SELECT ID_MEDICO FROM MEDICO_"+tableSuffix+" WHERE NOMBRE = ?";
-//        try (Connection conn = ConexionSQL.conectar();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//            pstmt.setString(1, nombreMedico);
-//            try (ResultSet rs = pstmt.executeQuery()) {
-//                return rs.next() ? rs.getInt("ID_MEDICO") : -1;
-//            }
-//        }
-//    }
 
-//    private int obtenerIdCentroMedico(int idMedico) throws SQLException {
-//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-//        String sql = "SELECT ID_CENTRO FROM MEDICO_"+tableSuffix+" WHERE ID_MEDICO = ?";
-//        try (Connection conn = ConexionSQL.conectar();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//            pstmt.setInt(1, idMedico);
-//            try (ResultSet rs = pstmt.executeQuery()) {
-//                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
-//            }
-//        }
-//    }
-
-//    private int generarNuevoIdCita() throws SQLException {
-//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-//        String sql = "SELECT MAX(ID_CITA) + 1 AS NUEVO_ID FROM CITA_"+tableSuffix;
-//        try (Connection conn = ConexionSQL.conectar();
-//             Statement stmt = conn.createStatement();
-//             ResultSet rs = stmt.executeQuery(sql)) {
-//            return rs.next() ? rs.getInt("NUEVO_ID") : 1;
-//        }
-//    }
-
-    /**
-     * Valida si un paciente existe en la base de datos
-     */
     private boolean validarPaciente(String cedula) throws SQLException {
-//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
         String sql = "SELECT 1 FROM PACIENTE WHERE CEDULA = ?";
         try (Connection conn = ConexionSQL.conectar();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -630,17 +572,6 @@ public class AgendamientoWindow extends JFrame {
             }
         }
     }
-
-//    private int obtenerIdCentroMedico(Connection conn, int idMedico) throws SQLException {
-//        String tableSuffix = this.sedeSelect.equalsIgnoreCase("QUITO") ? "Q" : "G";
-//        String sql = "SELECT ID_CENTRO FROM MEDICO_"+tableSuffix+" WHERE ID_MEDICO = ?";
-//        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-//            pstmt.setInt(1, idMedico);
-//            try (ResultSet rs = pstmt.executeQuery()) {
-//                return rs.next() ? rs.getInt("ID_CENTRO") : -1;
-//            }
-//        }
-//    }
 
     private ImageIcon escalarImagen(String ruta, int ancho, int alto) {
         try {
@@ -657,12 +588,7 @@ public class AgendamientoWindow extends JFrame {
         }
     }
 
-    /**
-     * Genera un nuevo ID para la cita
-     */
- 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new AgendamientoWindow());
     }
-
 }
